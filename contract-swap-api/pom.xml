@@ -105,7 +105,7 @@
 			<groupId>com.sparkframework</groupId>
 			<artifactId>spark-core</artifactId>
 			<scope>system</scope>
-			<systemPath>D:\Project\chain\HashCome_Java_Framework\HashCome_Java_Framework\jar\spark-core-2.6.0.jar</systemPath>
+			<systemPath>D:\Project\chain\HashCome\jar\spark-core-2.6.0.jar</systemPath>
         </dependency>
         <dependency>
             <groupId>org.java-websocket</groupId>
