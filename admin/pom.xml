@@ -165,7 +165,7 @@
         </profile>
     </profiles>
     <build>
-        <finalName>admin-api</finalName>
+        <finalName>admin</finalName>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
