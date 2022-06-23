@@ -285,8 +285,7 @@ public class CaiPiaoHttpUtils {
 	
 	private static void sslClient(HttpClient httpClient) {
         try {
-//            SSLContext ctx = SSLContext.getInstance("TLS");
-            SSLContext ctx = SSLContext.getInstance("SSLv1");
+            SSLContext ctx = SSLContext.getInstance("TLS");
             X509TrustManager tm = new X509TrustManager() {
                 @Override
                 public X509Certificate[] getAcceptedIssuers() {
