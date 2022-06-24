@@ -34,8 +34,8 @@ public class WsClientHuobi {
         List<ContractCoin> contractCoinList = contractCoinService.findAll();
 
         try {
-//            URI uri = new URI("wss//futures.huobi.com/ws");// 国内不被墙的地址/wss://api.huobi.pro/ws   ws://api.huobi.br.com:443/ws
-            URI uri = new URI("wss://www.huobi.com/-/s/pro/ws");// 国内不被墙的地址/wss://api.huobi.pro/ws   ws://api.huobi.br.com:443/ws
+            URI uri = new URI("wss//futures.huobi.com/ws");// 国内不被墙的地址/wss://api.huobi.pro/ws   ws://api.huobi.br.com:443/ws
+//            URI uri = new URI("wss://www.huobi.com/-/s/pro/ws");// 国内不被墙的地址/wss://api.huobi.pro/ws   ws://api.huobi.br.com:443/ws
             WebSocketHuobi ws = new WebSocketHuobi(uri, matchFactory, marketService, exchangePushJob);
 
             WebSocketConnectionManage.setWebSocket(ws);
