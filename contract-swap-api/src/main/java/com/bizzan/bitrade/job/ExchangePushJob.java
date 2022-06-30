@@ -75,6 +75,8 @@ public class ExchangePushJob {
             List<ContractTrade> trades = entry.getValue();
             if(trades.size() > 0){
                 synchronized (trades) {
+                    log.info("持仓数据：{}",trades);
+
                     messagingTemplate.convertAndSend("/topic/swap/trade/" + symbol, trades);
                     nettyHandler.handleTrades(symbol, trades, null);
                     trades.clear();
@@ -108,8 +110,6 @@ public class ExchangePushJob {
 
                         JSONObject json = plate.toJSON(24);
                         JSONObject json2 = plate.toJSON(50);
-
-                        log.info("盘口数据：{}",json);
 
                         //websocket推送盘口信息
                         messagingTemplate.convertAndSend("/topic/swap/trade-plate/" + symbol, json);
