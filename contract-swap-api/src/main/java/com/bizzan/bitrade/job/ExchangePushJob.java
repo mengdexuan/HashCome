@@ -1,14 +1,16 @@
 package com.bizzan.bitrade.job;
 
+import com.alibaba.fastjson.JSONObject;
 import com.bizzan.bitrade.entity.*;
 import com.bizzan.bitrade.handler.NettyHandler;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
-
+@Slf4j
 @Component
 public class ExchangePushJob {
     @Autowired
@@ -103,10 +105,16 @@ public class ExchangePushJob {
                         else {
                             continue;
                         }
+
+                        JSONObject json = plate.toJSON(24);
+                        JSONObject json2 = plate.toJSON(50);
+
+                        log.info("盘口数据：{}",json);
+
                         //websocket推送盘口信息
-                        messagingTemplate.convertAndSend("/topic/swap/trade-plate/" + symbol, plate.toJSON(24));
+                        messagingTemplate.convertAndSend("/topic/swap/trade-plate/" + symbol, json);
                         //websocket推送深度信息
-                        messagingTemplate.convertAndSend("/topic/swap/trade-depth/" + symbol, plate.toJSON(50));
+                        messagingTemplate.convertAndSend("/topic/swap/trade-depth/" + symbol, json2);
                         //netty推送
                         nettyHandler.handlePlate(symbol, plate);
                     }
