@@ -91,11 +91,12 @@ public class OrderController {
                                    @RequestParam(value = "triggerPrice", required = false) BigDecimal triggerPrice,// 触发价格
                                    @RequestParam(value = "entrustPrice") BigDecimal entrustPrice,// 委托价格(计划委托时如为0：市价成交)
                                    @RequestParam(value = "leverage") BigDecimal leverage,// 委托价格
-                                   @RequestParam(value = "volume") BigDecimal volume// 委托数量（张）
+                                   @RequestParam(value = "usdtNum",required = false) BigDecimal usdtNum,// 开仓usdt数量
+                                   @RequestParam(value = "volume",required = false) BigDecimal volume// 委托数量（张）
     ) {
 
         // 输入合法性检查
-        if (contractCoinId == null || direction == null || type == null || leverage == null || volume == null) {
+        if (contractCoinId == null || direction == null || type == null || leverage == null) {
             return MessageResult.error(500, msService.getMessage("ILLEGAL_ARGUMENT"));
         }
         if (direction != ContractOrderDirection.BUY && direction != ContractOrderDirection.SELL) {
@@ -105,8 +106,19 @@ public class OrderController {
             return MessageResult.error(500, msService.getMessage("ILLEGAL_ARGUMENT"));
         }
 
+        if (usdtNum==null && volume==null){
+            return MessageResult.error(500, "下单量为空！");
+        }
+
         // 检查交易对是否存在
         ContractCoin contractCoin = contractCoinService.findOne(contractCoinId);
+
+        if (usdtNum!=null){
+            //换算成张算
+            long temp = usdtNum.divide(contractCoin.getShareNumber(),4, BigDecimal.ROUND_DOWN).longValue();
+            volume = BigDecimal.valueOf(temp);
+        }
+
         if (contractCoin == null) {
             return MessageResult.error(500, msService.getMessage("NONSUPPORT_COIN"));
         }
