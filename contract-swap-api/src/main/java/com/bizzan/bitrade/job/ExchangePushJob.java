@@ -75,8 +75,6 @@ public class ExchangePushJob {
             List<ContractTrade> trades = entry.getValue();
             if(trades.size() > 0){
                 synchronized (trades) {
-                    log.info("持仓数据：{}",trades);
-
                     messagingTemplate.convertAndSend("/topic/swap/trade/" + symbol, trades);
                     nettyHandler.handleTrades(symbol, trades, null);
                     trades.clear();
