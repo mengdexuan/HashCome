@@ -127,6 +127,10 @@ public class MemberContractWallet {
     @Transient
     private BigDecimal currentPrice;
 
+
+    @Transient
+    private BigDecimal blastPrice;//爆仓价格
+
     @Transient
     private BigDecimal cnyRate = BigDecimal.valueOf(7L);
 

@@ -26,6 +26,7 @@ import static com.bizzan.bitrade.constant.SysConstant.SESSION_MEMBER;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.SimpleDateFormat;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -91,8 +92,8 @@ public class OrderController {
                                    @RequestParam(value = "triggerPrice", required = false) BigDecimal triggerPrice,// 触发价格
                                    @RequestParam(value = "entrustPrice") BigDecimal entrustPrice,// 委托价格(计划委托时如为0：市价成交)
                                    @RequestParam(value = "leverage") BigDecimal leverage,// 委托价格
-                                   @RequestParam(value = "usdtNum",required = false) BigDecimal usdtNum,// 开仓usdt数量
-                                   @RequestParam(value = "volume",required = false) BigDecimal volume// 委托数量（张）
+                                   @RequestParam(value = "usdtNum", required = false) BigDecimal usdtNum,// 开仓usdt数量
+                                   @RequestParam(value = "volume", required = false) BigDecimal volume// 委托数量（张）
     ) {
 
         // 输入合法性检查
@@ -106,16 +107,16 @@ public class OrderController {
             return MessageResult.error(500, msService.getMessage("ILLEGAL_ARGUMENT"));
         }
 
-        if (usdtNum==null && volume==null){
+        if (usdtNum == null && volume == null) {
             return MessageResult.error(500, "下单量为空！");
         }
 
         // 检查交易对是否存在
         ContractCoin contractCoin = contractCoinService.findOne(contractCoinId);
 
-        if (usdtNum!=null){
+        if (usdtNum != null) {
             //换算成张算
-            long temp = usdtNum.divide(contractCoin.getShareNumber(),4, BigDecimal.ROUND_DOWN).longValue();
+            long temp = usdtNum.divide(contractCoin.getShareNumber(), 4, BigDecimal.ROUND_DOWN).longValue();
             volume = BigDecimal.valueOf(temp);
         }
 
@@ -130,10 +131,10 @@ public class OrderController {
         // 尝试修改杠杆（仅当空仓时可修改杠杆）
         BigDecimal walletPosition = direction == ContractOrderDirection.BUY ? memberContractWallet.getUsdtBuyPosition().add(memberContractWallet.getUsdtFrozenBuyPosition()) : memberContractWallet.getUsdtSellPosition().add(memberContractWallet.getUsdtFrozenSellPosition());
         // 仓位为空，则下单时顺便修改一下杠杆
-        if(walletPosition.compareTo(BigDecimal.ZERO) == 0) {
-            if(direction == ContractOrderDirection.BUY) {
+        if (walletPosition.compareTo(BigDecimal.ZERO) == 0) {
+            if (direction == ContractOrderDirection.BUY) {
                 memberContractWalletService.modifyUsdtBuyLeverage(memberContractWallet.getId(), leverage);
-            }else{
+            } else {
                 memberContractWalletService.modifyUsdtSellLeverage(memberContractWallet.getId(), leverage);
             }
         }
@@ -202,9 +203,9 @@ public class OrderController {
             return MessageResult.error(500, "最小下单手数不能低于" + contractCoin.getMinShare() + "手");
         if (volume.compareTo(contractCoin.getMaxShare()) > 0)
             return MessageResult.error(500, "最大下单手数不能高于" + contractCoin.getMaxShare() + "手");
-        if(volume.compareTo(BigDecimal.ONE) < 0)
+        if (volume.compareTo(BigDecimal.ONE) < 0)
             return MessageResult.error(500, "开仓张数不符规定");//小于1张
-        if(BigDecimal.valueOf(volume.intValue()).compareTo(volume) != 0)
+        if (BigDecimal.valueOf(volume.intValue()).compareTo(volume) != 0)
             return MessageResult.error(500, "开仓张数不符规定"); // 含有小数
 
         // 检查合约引擎是否存在
@@ -216,9 +217,9 @@ public class OrderController {
         BigDecimal openPrice = BigDecimal.ZERO;
         BigDecimal currentPrice = contractCoinMatchFactory.getContractCoinMatch(contractCoin.getSymbol()).getNowPrice();
         // 委托价格是否太高或太低(限价单需要在2%的价格范围内下单)
-        if(type == ContractOrderType.LIMIT_PRICE) {
-            if(entrustPrice.compareTo(currentPrice.multiply(BigDecimal.ONE.add(BigDecimal.valueOf(0.2)))) > 0
-            || entrustPrice.compareTo(currentPrice.multiply(BigDecimal.ONE.subtract(BigDecimal.valueOf(0.2)))) < 0) {
+        if (type == ContractOrderType.LIMIT_PRICE) {
+            if (entrustPrice.compareTo(currentPrice.multiply(BigDecimal.ONE.add(BigDecimal.valueOf(0.2)))) > 0
+                    || entrustPrice.compareTo(currentPrice.multiply(BigDecimal.ONE.subtract(BigDecimal.valueOf(0.2)))) < 0) {
                 return MessageResult.error(500, "下单价格超限");
             }
         }
@@ -290,17 +291,17 @@ public class OrderController {
         }
 
         // 计划委托中的触发价格需要大于0
-        if(type == ContractOrderType.SPOT_LIMIT) {
-            if(triggerPrice == null) {
+        if (type == ContractOrderType.SPOT_LIMIT) {
+            if (triggerPrice == null) {
                 return MessageResult.error(500, "请设置触发价");
             }
-            if(entrustPrice == null) {
+            if (entrustPrice == null) {
                 return MessageResult.error(500, "请设置委托价");
             }
-            if(triggerPrice.compareTo(BigDecimal.ZERO) <= 0) {
+            if (triggerPrice.compareTo(BigDecimal.ZERO) <= 0) {
                 return MessageResult.error(500, "触发价格必须大于0");
             }
-            if(entrustPrice.compareTo(BigDecimal.ZERO) < 0) {
+            if (entrustPrice.compareTo(BigDecimal.ZERO) < 0) {
                 return MessageResult.error(500, "计划委托价格不能小于0");
             }
         }
@@ -331,9 +332,9 @@ public class OrderController {
         orderEntrust.setStatus(ContractOrderEntrustStatus.ENTRUST_ING); // 委托状态：委托中
         orderEntrust.setCurrentPrice(currentPrice);
         orderEntrust.setIsBlast(0); // 不是爆仓单
-        if(type == ContractOrderType.SPOT_LIMIT) { // 是否是计划委托单
+        if (type == ContractOrderType.SPOT_LIMIT) { // 是否是计划委托单
             orderEntrust.setIsFromSpot(1);
-        }else{
+        } else {
             orderEntrust.setIsFromSpot(0);
         }
 
@@ -341,9 +342,9 @@ public class OrderController {
         ContractOrderEntrust retObj = contractOrderEntrustService.save(orderEntrust);
 
         // 冻结保证金 + 手续费(限价或者市价时，冻结资金，计划委托不冻结资金)
-        if(type == ContractOrderType.LIMIT_PRICE || type == ContractOrderType.MARKET_PRICE) {
+        if (type == ContractOrderType.LIMIT_PRICE || type == ContractOrderType.MARKET_PRICE) {
             memberContractWalletService.freezeUsdtBalance(memberContractWallet, principalAmount.add(openFee));
-        }else{
+        } else {
             // 计划委托，同向只能有一个（如止盈或止损单只能有一个）
         }
 
@@ -402,7 +403,7 @@ public class OrderController {
             }
         }
         // 计划委托需要输入触发价格
-        if(type == ContractOrderType.SPOT_LIMIT) {
+        if (type == ContractOrderType.SPOT_LIMIT) {
             if (triggerPrice == null) {
                 return MessageResult.error(500, "请输入触发价格");
             }
@@ -421,9 +422,9 @@ public class OrderController {
             return MessageResult.error(500, msService.getMessage("NONSUPPORT_COIN"));
         }
 
-        if(volume.compareTo(BigDecimal.ONE) < 0)
+        if (volume.compareTo(BigDecimal.ONE) < 0)
             return MessageResult.error(500, "平仓张数不符规定");//小于1张
-        if(BigDecimal.valueOf(volume.intValue()).compareTo(volume) != 0)
+        if (BigDecimal.valueOf(volume.intValue()).compareTo(volume) != 0)
             return MessageResult.error(500, "平仓张数不符规定"); // 含有小数
 
         if (direction == ContractOrderDirection.BUY) {
@@ -441,8 +442,8 @@ public class OrderController {
         BigDecimal currentPrice = contractCoinMatchFactory.getContractCoinMatch(contractCoin.getSymbol()).getNowPrice();
 
         // 委托价格是否太高或太低(限价单需要在2%的价格范围内下单)
-        if(type == ContractOrderType.LIMIT_PRICE) {
-            if(entrustPrice.compareTo(currentPrice.multiply(BigDecimal.ONE.add(BigDecimal.valueOf(0.02)))) > 0
+        if (type == ContractOrderType.LIMIT_PRICE) {
+            if (entrustPrice.compareTo(currentPrice.multiply(BigDecimal.ONE.add(BigDecimal.valueOf(0.02)))) > 0
                     || entrustPrice.compareTo(currentPrice.multiply(BigDecimal.ONE.subtract(BigDecimal.valueOf(0.02)))) < 0) {
                 return MessageResult.error(500, "下单价格超限");
             }
@@ -477,13 +478,13 @@ public class OrderController {
         orderEntrust.setCloseFee(closeFee);
         orderEntrust.setCurrentPrice(currentPrice);
         orderEntrust.setIsBlast(0); // 不是爆仓单
-        if(type == ContractOrderType.SPOT_LIMIT) { // 是否是计划委托单
+        if (type == ContractOrderType.SPOT_LIMIT) { // 是否是计划委托单
             orderEntrust.setIsFromSpot(1);
-        }else{
+        } else {
             orderEntrust.setIsFromSpot(0);
         }
         //计算平仓应该扣除多少保证金(平仓量/（可平仓量+冻结平仓量） *  保证金总量）
-        if(type != ContractOrderType.SPOT_LIMIT) {
+        if (type != ContractOrderType.SPOT_LIMIT) {
             if (direction == ContractOrderDirection.BUY) { // 买入平空
                 BigDecimal mPrinc = volume.divide(memberContractWallet.getUsdtSellPosition().add(memberContractWallet.getUsdtFrozenSellPosition()), 8, RoundingMode.HALF_UP).multiply(memberContractWallet.getUsdtSellPrincipalAmount());
                 orderEntrust.setPrincipalAmount(mPrinc);
@@ -514,7 +515,7 @@ public class OrderController {
         }
 
         // 限价或市价下单时，需要冻结仓位，计划委托下单则无需冻结
-        if(type == ContractOrderType.LIMIT_PRICE || type == ContractOrderType.MARKET_PRICE) {
+        if (type == ContractOrderType.LIMIT_PRICE || type == ContractOrderType.MARKET_PRICE) {
             // 冻结持仓量
             if (direction == ContractOrderDirection.BUY) {
                 // 冻结空仓持仓
@@ -555,9 +556,10 @@ public class OrderController {
 
     /**
      * 一键平仓（市价全平）
+     *
      * @param authMember
      * @param contractCoinId
-     * @param type 0:市价平多  1:市价平空  2:市价平多+平空
+     * @param type           0:市价平多  1:市价平空  2:市价平多+平空
      * @return
      */
     @RequestMapping("close-all")
@@ -565,7 +567,7 @@ public class OrderController {
         Assert.notNull(contractCoinId, "请输入合约ID");
         Assert.notNull(type, "请输入平仓类型");
 
-        Member member  = memberService.findOne(authMember.getId());
+        Member member = memberService.findOne(authMember.getId());
         Assert.notNull(member, "用户不存在");
 
         ContractCoin contractCoin = contractCoinService.findOne(contractCoinId);
@@ -576,28 +578,28 @@ public class OrderController {
 
         BigDecimal volumeBuy = BigDecimal.ZERO;
         BigDecimal volumeSell = BigDecimal.ZERO;
-        if(type == 0) { // 平多
+        if (type == 0) { // 平多
             // 检查多仓是否存在
-            if(wallet.getUsdtFrozenBuyPosition().compareTo(BigDecimal.ZERO) > 0) {
+            if (wallet.getUsdtFrozenBuyPosition().compareTo(BigDecimal.ZERO) > 0) {
                 return MessageResult.error("请先撤销其他平多单");
             }
-            if(wallet.getUsdtBuyPosition().compareTo(BigDecimal.ZERO) <= 0) {
+            if (wallet.getUsdtBuyPosition().compareTo(BigDecimal.ZERO) <= 0) {
                 return MessageResult.error("当前没有多仓可平");
             }
             volumeBuy = wallet.getUsdtBuyPosition();
-        }else if(type == 1) {
-            if(wallet.getUsdtFrozenSellPosition().compareTo(BigDecimal.ZERO) > 0) {
+        } else if (type == 1) {
+            if (wallet.getUsdtFrozenSellPosition().compareTo(BigDecimal.ZERO) > 0) {
                 return MessageResult.error("请先撤销其他平空单");
             }
-            if(wallet.getUsdtSellPosition().compareTo(BigDecimal.ZERO) <= 0) {
+            if (wallet.getUsdtSellPosition().compareTo(BigDecimal.ZERO) <= 0) {
                 return MessageResult.error("当前没有空仓可平");
             }
             volumeSell = wallet.getUsdtSellPosition();
-        }else if(type == 2){
-            if(wallet.getUsdtFrozenSellPosition().compareTo(BigDecimal.ZERO) > 0 || wallet.getUsdtFrozenBuyPosition().compareTo(BigDecimal.ZERO) > 0) {
+        } else if (type == 2) {
+            if (wallet.getUsdtFrozenSellPosition().compareTo(BigDecimal.ZERO) > 0 || wallet.getUsdtFrozenBuyPosition().compareTo(BigDecimal.ZERO) > 0) {
                 return MessageResult.error("请先撤销其他平多单或平空单");
             }
-            if(wallet.getUsdtBuyPosition().compareTo(BigDecimal.ZERO) <= 0 && wallet.getUsdtSellPosition().compareTo(BigDecimal.ZERO) <= 0) {
+            if (wallet.getUsdtBuyPosition().compareTo(BigDecimal.ZERO) <= 0 && wallet.getUsdtSellPosition().compareTo(BigDecimal.ZERO) <= 0) {
                 return MessageResult.error("当前没有可平单持仓或空单持仓");
             }
             volumeBuy = wallet.getUsdtBuyPosition();
@@ -607,7 +609,7 @@ public class OrderController {
         BigDecimal currentPrice = contractCoinMatchFactory.getContractCoinMatch(contractCoin.getSymbol()).getNowPrice();
 
         // 多仓平仓
-        if(type == 0 || type == 2) {
+        if (type == 0 || type == 2) {
             BigDecimal volume = volumeBuy;
             // 1、计算平仓手续费(合约张数 * 合约面值 * 开仓费率）
             BigDecimal closeFee = volume.multiply(contractCoin.getShareNumber()).multiply(contractCoin.getCloseFee());
@@ -672,7 +674,7 @@ public class OrderController {
 
 
         // 空仓平仓
-        if(type == 1 || type == 2) {
+        if (type == 1 || type == 2) {
             BigDecimal volume = volumeSell;
             // 1、计算平仓手续费(合约张数 * 合约面值 * 开仓费率）
             BigDecimal closeFee = volume.multiply(contractCoin.getShareNumber()).multiply(contractCoin.getCloseFee());
@@ -740,6 +742,7 @@ public class OrderController {
 
     /**
      * 合约撤销单
+     *
      * @param authMember
      * @param entrustId
      * @return
@@ -749,13 +752,13 @@ public class OrderController {
                                      Long entrustId
     ) {
         ContractOrderEntrust entrustOrder = contractOrderEntrustService.findOne(entrustId);
-        if(entrustOrder == null) {
+        if (entrustOrder == null) {
             return MessageResult.error(500, "委托不存在");
         }
-        if(entrustOrder.getMemberId() != authMember.getId()) {
+        if (entrustOrder.getMemberId() != authMember.getId()) {
             return MessageResult.error(500, "非法操作");
         }
-        if(entrustOrder.getStatus() != ContractOrderEntrustStatus.ENTRUST_ING) {
+        if (entrustOrder.getStatus() != ContractOrderEntrustStatus.ENTRUST_ING) {
             return MessageResult.error(500, "委托状态错误");
         }
 
@@ -771,6 +774,7 @@ public class OrderController {
 
     /**
      * 合约撤销单(撤销所有委托，限价+计划+市价)
+     *
      * @param authMember
      * @param contractCoinId
      * @return
@@ -780,7 +784,7 @@ public class OrderController {
                                         Long contractCoinId
     ) {
         List<ContractOrderEntrust> orderList = contractOrderEntrustService.findAllByMemberIdAndContractId(authMember.getId(), contractCoinId);
-        if(orderList != null && orderList.size() > 0) {
+        if (orderList != null && orderList.size() > 0) {
             for (int i = 0; i < orderList.size(); i++) {
                 ContractOrderEntrust entrustOrder = orderList.get(i);
                 if (entrustOrder.getMemberId() != authMember.getId()) {
@@ -881,6 +885,7 @@ public class OrderController {
         result.setData(wallet);
         return result;
     }
+
 
     /**
      * 获取当前委托列表
