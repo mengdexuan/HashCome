@@ -43,14 +43,7 @@ public class MonitorController {
 	@Autowired
 	private RestTemplate restTemplate;
 
-	@Scheduled(fixedDelay = 5000)
-	public void test() {
-		String serviceName = "BITRADE-MARKET";
-		String url = "http://" + serviceName + "/market/exchange-rate/currency/CNY";
-		ResponseEntity<HashMap> resultStr = restTemplate.getForEntity(url, HashMap.class);
-		Map<String, Object> map = (HashMap<String, Object>) resultStr.getBody();
-		log.info("结果：{}",map);
-	}
+
 
 
     @RequestMapping("overview")

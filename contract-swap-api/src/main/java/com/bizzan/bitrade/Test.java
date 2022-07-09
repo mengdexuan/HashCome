@@ -9,9 +9,9 @@ import java.util.Map;
 public class Test {
 
     public static void main(String[] args) {
-//        String url = "http://103.218.242.25:8801/swap/order/open";
-//        String url = "http://103.218.242.25:8801/uc/login";
-        String url = "http://103.218.242.25:8801/swap/order/ajust-principal";
+//        String url = "http://10.8.28.39:8801/swap/order/open";
+//        String url = "http://10.8.28.39:8801/uc/login";
+        String url = "http://10.8.28.39:8801/swap/order/ajust-principal";
 
         HttpRequest post = HttpUtil.createPost(url);
         post.header("x-auth-token","5d8a3808-c294-4970-b630-a6228cfaa16a");
