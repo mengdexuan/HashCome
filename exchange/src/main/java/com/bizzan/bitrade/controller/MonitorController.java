@@ -11,12 +11,16 @@ import com.bizzan.bitrade.service.ExchangeOrderDetailService;
 import com.bizzan.bitrade.service.ExchangeOrderService;
 import com.bizzan.bitrade.util.MessageResult;
 
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.client.RestTemplate;
 
 import java.math.BigDecimal;
 import java.text.ParseException;
@@ -36,7 +40,19 @@ public class MonitorController {
     private KafkaTemplate<String,String> kafkaTemplate;
     @Autowired
     private ExchangeCoinService exchangeCoinService;
-    
+	@Autowired
+	private RestTemplate restTemplate;
+
+	@Scheduled(fixedDelay = 5000)
+	public void test() {
+		String serviceName = "BITRADE-MARKET";
+		String url = "http://" + serviceName + "/market/exchange-rate/currency/CNY";
+		ResponseEntity<HashMap> resultStr = restTemplate.getForEntity(url, HashMap.class);
+		Map<String, Object> map = (HashMap<String, Object>) resultStr.getBody();
+		log.info("结果：{}",map);
+	}
+
+
     @RequestMapping("overview")
     public JSONObject  traderOverview(String symbol){
         CoinTrader trader = factory.getTrader(symbol);
