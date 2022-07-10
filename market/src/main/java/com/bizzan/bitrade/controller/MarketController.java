@@ -234,6 +234,11 @@ public class MarketController {
                 period = (val/60) + "hour";
             }
         }
+
+        String collName = "exchange_kline_"+symbol+"_"+ period;
+
+        log.info("查询K线的集合名称：{}",collName);
+
         List<KLine> list = marketService.findAllKLine(symbol,from,to,period);
 
         JSONArray array = new JSONArray();
