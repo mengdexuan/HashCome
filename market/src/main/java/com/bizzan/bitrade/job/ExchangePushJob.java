@@ -222,7 +222,13 @@ public class ExchangePushJob {
                                     lastThumb.setVolume(lastThumb.getVolume().add(randTrade.getAmount()));
                                     lastThumb.setTurnover(lastThumb.getTurnover().add(randTrade.getAmount().multiply(randTrade.getPrice())));
                                     lastThumb.setChange(lastThumb.getClose().subtract(lastThumb.getOpen()));
-                                    lastThumb.setChg(lastThumb.getChange().divide(lastThumb.getOpen(), 4, BigDecimal.ROUND_UP));
+
+                                    try {
+                                        lastThumb.setChg(lastThumb.getChange().divide(lastThumb.getOpen(), 4, BigDecimal.ROUND_UP));
+                                    } catch (Exception e) {
+                                        //屏蔽除 0 异常
+                                    }
+
                                     lastThumb.setUsdRate(randTrade.getPrice());
                                     messagingTemplate.convertAndSend("/topic/market/thumb", lastThumb);
                                     nettyHandler.handleTrade(symbol, randTrade, lastThumb);
