@@ -200,7 +200,7 @@ public class MemberContractWalletController {
      * @param contractCoin
      * @param newPrice
      */
-    private void setBlastPrice(MemberContractWallet wallet, ContractCoin contractCoin, BigDecimal nowPrice,BigDecimal newPrice) {
+    private void setBlastPrice(MemberContractWallet wallet, ContractCoin contractCoin,BigDecimal newPrice) {
         // 同步最新用户仓位
         if (wallet.getUsdtPattern() == ContractOrderPattern.FIXED) { // 逐仓
             // 计算当前价格是否爆仓 - 多单计算
@@ -222,7 +222,13 @@ public class MemberContractWalletController {
             }
             // 计算当前价格是否爆仓 - 空单计算
             if (wallet.getUsdtSellPrice().compareTo(BigDecimal.ZERO) > 0) {
-                BigDecimal sellPL = BigDecimal.ONE.subtract(newPrice.divide(wallet.getUsdtSellPrice(), 8, BigDecimal.ROUND_DOWN)).multiply(wallet.getUsdtSellPosition().add(wallet.getUsdtFrozenSellPosition())).multiply(wallet.getUsdtShareNumber());
+//                1 - 爆仓价/开仓均价*持仓张数*合约面值 = 0    换算后：爆仓价 = 开仓均价/(持仓张数*合约面值)
+                BigDecimal sellPL = BigDecimal.ONE.subtract(
+                        newPrice.divide(wallet.getUsdtSellPrice(), 8, BigDecimal.ROUND_DOWN))
+                        .multiply(wallet.getUsdtSellPosition().add(wallet.getUsdtFrozenSellPosition()))//总张数
+                        .multiply(wallet.getUsdtShareNumber());//合约面值 1张 = 100USDT
+
+
                 // 保证金率低于最低保证金率，则爆仓
                 if (sellPL.compareTo(BigDecimal.ZERO) < 0) {
                     // 计算保证金率
