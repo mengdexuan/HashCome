@@ -31,7 +31,7 @@ public class MemberContractWallet {
     private BigDecimal usdtFrozenBalance; // 冻结保证金（金本位用）
 
     @Column(columnDefinition = "int(4) default 1 comment '金本位仓位模式'")
-    private ContractOrderPattern usdtPattern; // 1逐仓 2全仓
+    private ContractOrderPattern usdtPattern; // 1逐仓 0全仓
 
     @Column(columnDefinition = "decimal(18,8) DEFAULT 0 comment '做多杠杆倍数'")
     private BigDecimal usdtBuyLeverage;// 做多杠杆倍数（金本位））
@@ -129,9 +129,12 @@ public class MemberContractWallet {
 
 
     @Transient
-    private BigDecimal blastPrice;//爆仓价格
+    private BigDecimal moreBlastPrice;//多单爆仓价格
+    @Transient
+    private BigDecimal lessBlastPrice;//空单爆仓价格
 
     @Transient
     private BigDecimal cnyRate = BigDecimal.valueOf(7L);
+
 
 }

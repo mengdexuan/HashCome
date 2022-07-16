@@ -881,10 +881,242 @@ public class OrderController {
 
         wallet.setUsdtTotalProfitAndLoss(usdtTotalProfitAndLoss);
 
+        setMoreBlast(wallet);
+        setLessBlast(wallet);
+
         MessageResult result = MessageResult.success("success");
         result.setData(wallet);
         return result;
     }
+
+
+    /**
+     * 已知条件：
+         B1: 多仓均价 getUsdtBuyPrice
+         B2: 开多仓位 getUsdtBuyPosition
+         B3: 开多冻结仓位 getUsdtFrozenBuyPosition
+         S1: 空仓均价 getUsdtSellPrice
+         S2: 开空仓位 getUsdtSellPosition
+         S3: 开空冻结仓位 getUsdtFrozenSellPosition
+         C1: 合约⾯值 getUsdtShareNumber
+         C2: 做多杠杆倍数 getUsdtBuyLeverage
+         C3: 做空杠杆倍数 getUsdtSellLeverage
+         C4: 平仓⼿续费 getCloseFee
+         C5: 维持保证⾦率 getMaintenanceMarginRate
+         D1:多仓保证⾦ getUsdtBuyPrincipalAmount
+         D2:空仓保证⾦ getUsdtSellPrincipalAmount
+         D3:USDT余额 getUsdtBalance
+         D4:冻结USDT余额 getUsdtFrozenBalance
+
+
+         多仓收益 (X/B1-1)*(B2+B3)*C1
+         空仓收益 (1-X/S1)*(S2+S3)*C1
+         多仓价值 (B2+B3)*C1/C2
+         空仓价值 (S2+S3)*C1/C3
+         多仓⼿续费 (B2+B3)*C1*C4
+         空仓⼿续费 (S2+S3)*C1*C4
+
+        全仓爆仓价格计算公式：
+            X = B1*S1*(C5*((B2+B3)/C2 + (S2+S3)/C3) - D1/C1 + (B2+B3)*C4 - D2/C1 + (S2+S3)*C4 -
+        D3/C1 - D4/C1 + (B2+B3) - (S2+S3))/(S1*(B2+B3) - B1*(S2+S3))
+
+
+        逐仓爆仓价格计算公式：
+
+            多单：
+                X = (C5/C2 + C4 - D1/((B2+B3)*C1) + 1) *B1
+            空单：
+                X = (1 - C5/C3 - C4 + D2/(((S2+S3)*C1))) * S1
+
+     */
+
+
+    /**
+     * 全仓爆仓价格计算
+     * @param wallet
+     */
+    private BigDecimal fullBlast(MemberContractWallet wallet){
+
+        BigDecimal maintenanceMarginRate = wallet.getContractCoin().getMaintenanceMarginRate();
+        BigDecimal usdtBuyLeverage = wallet.getUsdtBuyLeverage();
+        BigDecimal usdtBuyPrincipalAmount = wallet.getUsdtBuyPrincipalAmount();
+        BigDecimal usdtBuyPosition = wallet.getUsdtBuyPosition();
+        BigDecimal usdtFrozenBuyPosition = wallet.getUsdtFrozenBuyPosition();
+        BigDecimal usdtShareNumber = wallet.getUsdtShareNumber();
+        BigDecimal usdtBuyPrice = wallet.getUsdtBuyPrice();
+        BigDecimal usdtSellLeverage = wallet.getUsdtSellLeverage();
+        BigDecimal usdtSellPrincipalAmount = wallet.getUsdtSellPrincipalAmount();
+        BigDecimal usdtSellPosition = wallet.getUsdtSellPosition();
+        BigDecimal usdtFrozenSellPosition = wallet.getUsdtFrozenSellPosition();
+        BigDecimal usdtSellPrice = wallet.getUsdtSellPrice();
+        BigDecimal closeFee = wallet.getContractCoin().getCloseFee();
+        BigDecimal usdtFrozenBalance = wallet.getUsdtFrozenBalance();
+
+
+//        (B2+B3)/C2
+        BigDecimal temp1 = (usdtBuyPosition.add(usdtFrozenBuyPosition)).divide(usdtBuyLeverage,4, BigDecimal.ROUND_DOWN);
+
+//        (S2+S3)/C3
+        BigDecimal temp2 = (usdtSellPosition.add(usdtFrozenSellPosition)).divide(usdtSellLeverage,4, BigDecimal.ROUND_DOWN);
+
+//        C5*((B2+B3)/C2 + (S2+S3)/C3)
+        BigDecimal temp3 = (temp1.add(temp2)).multiply(maintenanceMarginRate);
+
+//        D1/C1
+        BigDecimal temp4 = usdtBuyPrincipalAmount.divide(usdtShareNumber,4, BigDecimal.ROUND_DOWN);
+
+//        (B2+B3)*C4
+        BigDecimal temp5 = (usdtBuyPosition.add(usdtFrozenBuyPosition)).multiply(closeFee);
+
+//        D2/C1
+        BigDecimal temp6 = usdtSellPrincipalAmount.divide(usdtShareNumber,4, BigDecimal.ROUND_DOWN);
+
+//        (S2+S3)*C4
+        BigDecimal temp7 = (usdtSellPosition.add(usdtFrozenSellPosition)).multiply(closeFee);
+
+//        D3/C1
+        BigDecimal temp8 = usdtSellLeverage.divide(usdtShareNumber,4, BigDecimal.ROUND_DOWN);
+
+//        D4/C1
+        BigDecimal temp9 = usdtFrozenBalance.divide(usdtShareNumber,4, BigDecimal.ROUND_DOWN);
+
+//        (B2+B3)
+        BigDecimal temp10 = usdtBuyPosition.add(usdtFrozenBuyPosition);
+
+//        (S2+S3)
+        BigDecimal temp11 = usdtSellPosition.add(usdtFrozenSellPosition);
+
+//        S1*(B2+B3)
+        BigDecimal temp12 = usdtSellPrice.multiply(temp10);
+
+//        B1*(S2+S3)
+        BigDecimal temp13 = usdtBuyPrice.multiply(temp11);
+
+         /*
+        X = B1*S1*(
+                    C5*((B2+B3)/C2 + (S2+S3)/C3) -
+                    D1/C1 +
+                    (B2+B3)*C4 -
+                    D2/C1 +
+                    (S2+S3)*C4 -
+                    D3/C1 -
+                    D4/C1 +
+                    (B2+B3) -
+                    (S2+S3)
+                    ) / (S1*(B2+B3) - B1*(S2+S3))
+
+                */
+
+        BigDecimal temp14 = temp3.subtract(temp4).add(temp5).subtract(temp6).add(temp7)
+                .subtract(temp8).subtract(temp9).add(temp10).subtract(temp11);
+
+        BigDecimal temp15 = usdtBuyPrice.multiply(usdtSellPrice).multiply(temp14);
+        BigDecimal temp16 = temp12.subtract(temp13);
+
+        BigDecimal result = temp15.divide(temp16,4, BigDecimal.ROUND_DOWN);
+
+        return result;
+    }
+
+
+    /**
+     * 设置多单爆仓价
+     * @param wallet
+     * @return
+     */
+    private void setMoreBlast(MemberContractWallet wallet){
+        /*
+            多仓⼿续费 (B2+B3)*C1*C4
+
+        X = (getMaintenanceMarginRate/getUsdtBuyLeverage
+                + getCloseFee -
+                getUsdtBuyPrincipalAmount/((getUsdtBuyPosition+getUsdtFrozenBuyPosition)*getUsdtShareNumber)
+        +1) * getUsdtBuyPrice
+
+         */
+
+        BigDecimal maintenanceMarginRate = wallet.getContractCoin().getMaintenanceMarginRate();
+        BigDecimal usdtBuyLeverage = wallet.getUsdtBuyLeverage();
+        BigDecimal usdtBuyPrincipalAmount = wallet.getUsdtBuyPrincipalAmount();
+        BigDecimal usdtBuyPosition = wallet.getUsdtBuyPosition();
+        BigDecimal usdtFrozenBuyPosition = wallet.getUsdtFrozenBuyPosition();
+        BigDecimal usdtShareNumber = wallet.getUsdtShareNumber();
+        BigDecimal usdtBuyPrice = wallet.getUsdtBuyPrice();
+
+        BigDecimal closeFee = usdtBuyPosition.add(usdtFrozenBuyPosition).multiply(usdtShareNumber).multiply(wallet.getContractCoin().getCloseFee());
+
+        if (usdtBuyPosition.compareTo(BigDecimal.valueOf(0))==0){
+            //持仓为空
+            wallet.setMoreBlastPrice(BigDecimal.valueOf(0));
+            return;
+        }
+
+        if (wallet.getUsdtPattern().equals(ContractOrderPattern.FIXED)){
+            BigDecimal temp1 = maintenanceMarginRate.divide(usdtBuyLeverage, 4, BigDecimal.ROUND_DOWN);
+            BigDecimal temp2 = (usdtBuyPosition.add(usdtFrozenBuyPosition)).multiply(usdtShareNumber);
+            BigDecimal temp3 = usdtBuyPrincipalAmount.divide(temp2, 4, BigDecimal.ROUND_DOWN);
+            BigDecimal temp4 = temp1.add(closeFee).subtract(temp3).add(BigDecimal.valueOf(1));
+
+            BigDecimal moreBlastPrice = temp4.multiply(usdtBuyPrice);
+            wallet.setMoreBlastPrice(moreBlastPrice);
+        }else {
+            wallet.setMoreBlastPrice(fullBlast(wallet));
+        }
+
+    }
+
+
+
+    /**
+     * 设置空单爆仓价
+     * @param wallet
+     * @return
+     */
+    private void setLessBlast(MemberContractWallet wallet){
+
+        /**
+         * 空仓⼿续费 (S2+S3)*C1*C4
+         *
+         * X = (1 - getMaintenanceMarginRate/getUsdtSellLeverage - getCloseFee +
+         * getUsdtSellPrincipalAmount/((getUsdtSellPosition +
+         * getUsdtFrozenSellPosition)*getUsdtShareNumber)) * getUsdtSellPrice
+         *
+         */
+
+        BigDecimal maintenanceMarginRate = wallet.getContractCoin().getMaintenanceMarginRate();
+        BigDecimal usdtSellLeverage = wallet.getUsdtSellLeverage();
+        BigDecimal usdtSellPrincipalAmount = wallet.getUsdtSellPrincipalAmount();
+        BigDecimal usdtSellPosition = wallet.getUsdtSellPosition();
+        BigDecimal usdtFrozenSellPosition = wallet.getUsdtFrozenSellPosition();
+        BigDecimal usdtShareNumber = wallet.getUsdtShareNumber();
+        BigDecimal usdtSellPrice = wallet.getUsdtSellPrice();
+
+        BigDecimal closeFee = usdtSellPosition.add(usdtFrozenSellPosition).multiply(usdtShareNumber).multiply(wallet.getContractCoin().getCloseFee());
+
+        if (usdtSellPosition.compareTo(BigDecimal.valueOf(0))==0){
+            //持仓为空
+            wallet.setLessBlastPrice(BigDecimal.valueOf(0));
+            return;
+        }
+
+
+        if (wallet.getUsdtPattern().equals(ContractOrderPattern.FIXED)){
+            BigDecimal temp1 = maintenanceMarginRate.divide(usdtSellLeverage, 4, BigDecimal.ROUND_DOWN);
+            BigDecimal temp2 = (usdtSellPosition.add(usdtFrozenSellPosition)).multiply(usdtShareNumber);
+            BigDecimal temp3 = usdtSellPrincipalAmount.divide(temp2, 4, BigDecimal.ROUND_DOWN);
+            BigDecimal temp4 = BigDecimal.valueOf(1).subtract(temp1).subtract(closeFee).add(temp3);
+
+            BigDecimal lessBlastPrice = temp4.multiply(usdtSellPrice);
+            wallet.setLessBlastPrice(lessBlastPrice);
+        }else {
+            wallet.setLessBlastPrice(fullBlast(wallet));
+        }
+
+    }
+
+
+
+
 
 
     /**
