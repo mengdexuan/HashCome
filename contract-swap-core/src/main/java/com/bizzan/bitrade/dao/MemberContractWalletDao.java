@@ -194,8 +194,12 @@ public interface MemberContractWalletDao extends BaseDao<MemberContractWallet> {
     @Query("update MemberContractWallet wallet set wallet.usdtBuyPrincipalAmount=wallet.usdtBuyPrincipalAmount - :pAmount,wallet.usdtFrozenBuyPosition=wallet.usdtFrozenBuyPosition - :volume where wallet.id = :walletId and wallet.usdtBuyPrincipalAmount>=:pAmount and wallet.usdtFrozenBuyPosition>=:volume")
     void decreaseUsdtFrozenBuyPositionAndPrincipalAmount(@Param("walletId") Long walletId, @Param("volume") BigDecimal volume, @Param("pAmount") BigDecimal pAmount);
 
+    //资金 费率
     @Query(value = "select * from member_contract_wallet as wallet where (wallet.usdt_buy_position > 0 or wallet.usdt_sell_position > 0 or wallet.usdt_frozen_buy_position > 0 or wallet.usdt_frozen_sell_position > 0) and wallet.contract_id=:contractId", nativeQuery = true)
     List<MemberContractWallet> findAllNeedSync(@Param("contractId") Long contractId);
+
+    @Query(value = "select * from member_contract_wallet as wallet where (wallet.usdt_buy_position > 0 or wallet.usdt_sell_position > 0)", nativeQuery = true)
+    List<MemberContractWallet> findAllPosition();
 
     /**
      * 多仓保证金清零，多仓可用仓位清零，多仓冻结仓位清零
