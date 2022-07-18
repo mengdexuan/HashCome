@@ -219,6 +219,7 @@ public class ContractCoinController extends BaseAdminController implements Comma
     @GetMapping("feePercent")
     public List<Map<String,BigDecimal>> feePercent(){
 
+
         return feePercentList;
     }
 

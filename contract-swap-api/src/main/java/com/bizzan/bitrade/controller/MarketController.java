@@ -50,7 +50,7 @@ public class MarketController {
     public List<Map<String,BigDecimal>> test(){
 
         String serviceName = "ADMIN";
-        String url = "http://" + serviceName + "/swap-coin/feePercent";
+        String url = "http://" + serviceName + "/admin/swap-coin/feePercent";
 
         ParameterizedTypeReference<List<Map<String,BigDecimal>>> typeRef = new ParameterizedTypeReference<List<Map<String,BigDecimal>>>() {};
         ResponseEntity<List<Map<String,BigDecimal>>> responseEntity = restTemplate.exchange(url, HttpMethod.GET, new HttpEntity<>(null), typeRef);
