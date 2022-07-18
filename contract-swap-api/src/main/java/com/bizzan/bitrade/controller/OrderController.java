@@ -15,8 +15,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.shiro.util.Assert;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.data.domain.Page;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
@@ -28,6 +32,7 @@ import java.math.RoundingMode;
 import java.text.SimpleDateFormat;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 委托订单处理类
@@ -881,8 +886,26 @@ public class OrderController {
 
         wallet.setUsdtTotalProfitAndLoss(usdtTotalProfitAndLoss);
 
+
+        String serviceName = "ADMIN";
+        String url = "http://" + serviceName + "/admin/swap-coin/feePercent";
+
+        /**
+         * 查询 admin 服务，获取服务费率
+         */
+        ParameterizedTypeReference<List<Map<String,BigDecimal>>> typeRef = new ParameterizedTypeReference<List<Map<String,BigDecimal>>>() {};
+        ResponseEntity<List<Map<String,BigDecimal>>> responseEntity = restTemplate.exchange(url, HttpMethod.GET, new HttpEntity<>(null), typeRef);
+        List<Map<String, BigDecimal>> tempList = responseEntity.getBody();
+
         setMoreBlast(wallet);
         setLessBlast(wallet);
+
+        for (Map<String, BigDecimal> item:tempList){
+            if (item.containsKey(wallet.getContractCoin().getSymbol())){
+                BigDecimal feePercent = item.get(wallet.getContractCoin().getSymbol());
+                wallet.setFeePercent(feePercent);
+            }
+        }
 
         MessageResult result = MessageResult.success("success");
         result.setData(wallet);

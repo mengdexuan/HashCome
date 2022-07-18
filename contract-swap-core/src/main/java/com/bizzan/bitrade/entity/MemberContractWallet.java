@@ -132,6 +132,8 @@ public class MemberContractWallet {
     private BigDecimal moreBlastPrice;//多单爆仓价格
     @Transient
     private BigDecimal lessBlastPrice;//空单爆仓价格
+    @Transient
+    private BigDecimal feePercent;//资金费率
 
     @Transient
     private BigDecimal cnyRate = BigDecimal.valueOf(7L);
