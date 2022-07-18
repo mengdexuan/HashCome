@@ -1045,7 +1045,7 @@ public class OrderController {
 
         BigDecimal closeFee = usdtBuyPosition.add(usdtFrozenBuyPosition).multiply(usdtShareNumber).multiply(wallet.getContractCoin().getCloseFee());
 
-        if (usdtBuyPosition.compareTo(BigDecimal.valueOf(0))==0){
+        if (usdtBuyPosition.compareTo(BigDecimal.valueOf(0))==0&&usdtFrozenBuyPosition.compareTo(BigDecimal.valueOf(0))==0){
             //持仓为空
             wallet.setMoreBlastPrice(BigDecimal.valueOf(0));
             return;
@@ -1093,7 +1093,7 @@ public class OrderController {
 
         BigDecimal closeFee = usdtSellPosition.add(usdtFrozenSellPosition).multiply(usdtShareNumber).multiply(wallet.getContractCoin().getCloseFee());
 
-        if (usdtSellPosition.compareTo(BigDecimal.valueOf(0))==0){
+        if (usdtSellPosition.compareTo(BigDecimal.valueOf(0))==0&&usdtFrozenSellPosition.compareTo(BigDecimal.valueOf(0))==0){
             //持仓为空
             wallet.setLessBlastPrice(BigDecimal.valueOf(0));
             return;
