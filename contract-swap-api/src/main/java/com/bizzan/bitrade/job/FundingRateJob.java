@@ -8,6 +8,10 @@ import com.bizzan.bitrade.service.MemberContractWalletService;
 import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
@@ -24,9 +28,6 @@ import java.util.Map;
 @Slf4j
 @Component
 public class FundingRateJob {
-    //资金费率
-    private BigDecimal rate = BigDecimal.valueOf(0.001);
-
     @Autowired
     MemberContractWalletDao memberContractWalletDao;
 
@@ -45,6 +46,18 @@ public class FundingRateJob {
     //每 8 小时执行一次
     @Scheduled(cron = "0 0 */8 * * ?")
     public void run(){
+        feePercentList.clear();
+
+        String serviceName = "ADMIN";
+        String url = "http://" + serviceName + "/admin/swap-coin/feePercent";
+
+        /**
+         * 查询 admin 服务，获取服务费率
+         */
+        ParameterizedTypeReference<List<Map<String,BigDecimal>>> typeRef = new ParameterizedTypeReference<List<Map<String,BigDecimal>>>() {};
+        ResponseEntity<List<Map<String,BigDecimal>>> responseEntity = restTemplate.exchange(url, HttpMethod.GET, new HttpEntity<>(null), typeRef);
+        feePercentList =responseEntity.getBody();
+
         List<MemberContractWallet> list = memberContractWalletDao.findAllPosition();
         for (MemberContractWallet item:list){
             dealOne(item);
@@ -80,8 +93,9 @@ public class FundingRateJob {
         BigDecimal usdtSellPosition = wallet.getUsdtSellPosition();
         BigDecimal usdtFrozenSellPosition = wallet.getUsdtFrozenSellPosition();
 
-
         if (usdtBuyPosition.compareTo(BigDecimal.valueOf(0))==1){
+            BigDecimal rate = getRate(wallet);
+
             //多单
 //            多仓价值 (B2+B3)*C1/C2
             BigDecimal temp1 = usdtBuyPosition.add(usdtFrozenBuyPosition).multiply(usdtShareNumber).divide(usdtBuyLeverage, 4, BigDecimal.ROUND_DOWN);
@@ -98,6 +112,8 @@ public class FundingRateJob {
 
 
         if (usdtSellPosition.compareTo(BigDecimal.valueOf(0))==1){
+            BigDecimal rate = getRate(wallet);
+
             //空单
 //            空仓价值 (S2+S3)*C1/C3
 
@@ -114,6 +130,25 @@ public class FundingRateJob {
         }
 
     }
+
+
+    private BigDecimal getRate(MemberContractWallet wallet){
+        BigDecimal rate = null;
+
+        for (Map<String,BigDecimal> item:feePercentList){
+            if (item.containsKey(wallet.getContractCoin().getSymbol())){
+                rate = item.get(wallet.getContractCoin().getSymbol());
+                break;
+            }
+        }
+
+        if (rate==null){
+            return BigDecimal.valueOf(0);
+        }
+
+        return rate;
+    }
+
 
 
 }
