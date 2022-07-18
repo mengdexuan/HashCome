@@ -9,26 +9,27 @@ import com.bizzan.bitrade.entity.ContractCoin;
 import com.bizzan.bitrade.service.ContractCoinService;
 import com.bizzan.bitrade.util.JDBCUtils;
 import com.bizzan.bitrade.util.MessageResult;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.CommandLineRunner;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Sort;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/swap-coin")
 @Slf4j
-public class ContractCoinController extends BaseAdminController {
+public class ContractCoinController extends BaseAdminController implements CommandLineRunner {
 
     @Autowired
     private ContractCoinService contractCoinService;
@@ -176,7 +177,10 @@ public class ContractCoinController extends BaseAdminController {
         if(minShare != null) coin.setMinShare(minShare);
         if(maxShare != null) coin.setMaxShare(maxShare);
         if(intervalHour != null) coin.setIntervalHour(intervalHour);
-        if(feePercent != null) coin.setFeePercent(feePercent);
+        if(feePercent != null) {
+            coin.setFeePercent(feePercent);
+            setFeePercent(coin.getSymbol(),feePercent);
+        }
         if(maintenanceMarginRate != null) coin.setMaintenanceMarginRate(maintenanceMarginRate);
         if(openFee != null) coin.setOpenFee(openFee);
         if(closeFee != null) coin.setCloseFee(closeFee);
@@ -186,6 +190,38 @@ public class ContractCoinController extends BaseAdminController {
         contractCoinService.save(coin);
         return success("保存成功");
     }
+
+
+
+    private void setFeePercent(String symbol,BigDecimal feePercent){
+        for (Map<String,BigDecimal> item:feePercentList){
+            if (item.containsKey(symbol)){
+                item.put(symbol,feePercent);
+                break;
+            }
+        }
+    }
+
+
+    @Override
+    public void run(String... strings) throws Exception {
+        List<ContractCoin> list = contractCoinService.findAll();
+        for (ContractCoin item:list){
+            Map<String,BigDecimal> map = Maps.newHashMap();
+            map.put(item.getSymbol(),item.getFeePercent());
+            feePercentList.add(map);
+        }
+    }
+
+    List<Map<String,BigDecimal>> feePercentList = Lists.newArrayList();
+
+
+    @GetMapping("feePercent")
+    public List<Map<String,BigDecimal>> feePercent(){
+
+        return feePercentList;
+    }
+
 
     /**
      * 批量为用户添加钱包

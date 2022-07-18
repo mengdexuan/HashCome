@@ -13,10 +13,14 @@ import org.java_websocket.client.WebSocketClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.client.RestTemplate;
 
 import java.math.BigDecimal;
 import java.util.*;
@@ -37,6 +41,25 @@ public class MarketController {
 
     @Autowired
     private RedisTemplate redisTemplate;
+
+    @Autowired
+    RestTemplate restTemplate;
+
+
+    @RequestMapping("test")
+    public List<Map<String,BigDecimal>> test(){
+
+        String serviceName = "ADMIN";
+        String url = "http://" + serviceName + "/swap-coin/feePercent";
+
+        ParameterizedTypeReference<List<Map<String,BigDecimal>>> typeRef = new ParameterizedTypeReference<List<Map<String,BigDecimal>>>() {};
+        ResponseEntity<List<Map<String,BigDecimal>>> responseEntity = restTemplate.exchange(url, HttpMethod.GET, new HttpEntity<>(null), typeRef);
+        List<Map<String,BigDecimal>> tempList =responseEntity.getBody();
+
+        return tempList;
+    }
+
+
 
     /**
      * 获取支持的交易币种

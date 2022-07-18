@@ -1,16 +1,20 @@
 package com.bizzan.bitrade.job;
 
 import com.bizzan.bitrade.dao.MemberContractWalletDao;
+import com.bizzan.bitrade.entity.ContractCoin;
 import com.bizzan.bitrade.entity.MemberContractWallet;
 import com.bizzan.bitrade.service.ContractCoinService;
 import com.bizzan.bitrade.service.MemberContractWalletService;
+import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestTemplate;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 
 /**
  *
@@ -31,6 +35,11 @@ public class FundingRateJob {
 
     @Autowired
     ContractCoinService contractCoinService;
+
+    List<Map<String,BigDecimal>> feePercentList = Lists.newArrayList();
+
+    @Autowired
+    RestTemplate restTemplate;
 
 
     //每 8 小时执行一次
@@ -62,7 +71,6 @@ public class FundingRateJob {
         D2:空仓保证⾦ getUsdtSellPrincipalAmount
         D3:USDT余额 getUsdtBalance
         D4:冻结USDT余额 getUsdtFrozenBalance
-
 */
         BigDecimal usdtBuyLeverage = wallet.getUsdtBuyLeverage();
         BigDecimal usdtBuyPosition = wallet.getUsdtBuyPosition();
