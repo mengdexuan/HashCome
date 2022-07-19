@@ -1066,7 +1066,8 @@ public class OrderController {
         BigDecimal usdtShareNumber = wallet.getUsdtShareNumber();
         BigDecimal usdtBuyPrice = wallet.getUsdtBuyPrice();
 
-        BigDecimal closeFee = usdtBuyPosition.add(usdtFrozenBuyPosition).multiply(usdtShareNumber).multiply(wallet.getContractCoin().getCloseFee());
+//        BigDecimal closeFee = usdtBuyPosition.add(usdtFrozenBuyPosition).multiply(usdtShareNumber).multiply(wallet.getContractCoin().getCloseFee());
+        BigDecimal closeFee = wallet.getContractCoin().getCloseFee();
 
         log.info("设置多单爆仓价 maintenanceMarginRate:{},usdtBuyLeverage:{}" +
                         ",usdtBuyPrincipalAmount:{},usdtBuyPosition:{},usdtFrozenBuyPosition:{},usdtShareNumber:{}" +
@@ -1120,7 +1121,8 @@ public class OrderController {
         BigDecimal usdtShareNumber = wallet.getUsdtShareNumber();
         BigDecimal usdtSellPrice = wallet.getUsdtSellPrice();
 
-        BigDecimal closeFee = usdtSellPosition.add(usdtFrozenSellPosition).multiply(usdtShareNumber).multiply(wallet.getContractCoin().getCloseFee());
+//        BigDecimal closeFee = usdtSellPosition.add(usdtFrozenSellPosition).multiply(usdtShareNumber).multiply(wallet.getContractCoin().getCloseFee());
+        BigDecimal closeFee = wallet.getContractCoin().getCloseFee();
 
         log.info("设置空单爆仓价 maintenanceMarginRate:{},usdtSellLeverage:{}" +
                 ",usdtSellPrincipalAmount:{},usdtSellPosition:{},usdtFrozenSellPosition:{},usdtShareNumber:{}" +
