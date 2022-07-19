@@ -1075,9 +1075,9 @@ public class OrderController {
         }
 
         if (wallet.getUsdtPattern().equals(ContractOrderPattern.FIXED)){
-            BigDecimal temp1 = maintenanceMarginRate.divide(usdtBuyLeverage, 4, BigDecimal.ROUND_DOWN);
+            BigDecimal temp1 = maintenanceMarginRate.divide(usdtBuyLeverage, 8, BigDecimal.ROUND_DOWN);
             BigDecimal temp2 = (usdtBuyPosition.add(usdtFrozenBuyPosition)).multiply(usdtShareNumber);
-            BigDecimal temp3 = usdtBuyPrincipalAmount.divide(temp2, 4, BigDecimal.ROUND_DOWN);
+            BigDecimal temp3 = usdtBuyPrincipalAmount.divide(temp2, 8, BigDecimal.ROUND_DOWN);
             BigDecimal temp4 = temp1.add(closeFee).subtract(temp3).add(BigDecimal.valueOf(1));
 
             BigDecimal moreBlastPrice = temp4.multiply(usdtBuyPrice);
@@ -1124,9 +1124,9 @@ public class OrderController {
 
 
         if (wallet.getUsdtPattern().equals(ContractOrderPattern.FIXED)){
-            BigDecimal temp1 = maintenanceMarginRate.divide(usdtSellLeverage, 4, BigDecimal.ROUND_DOWN);
+            BigDecimal temp1 = maintenanceMarginRate.divide(usdtSellLeverage, 8, BigDecimal.ROUND_DOWN);
             BigDecimal temp2 = (usdtSellPosition.add(usdtFrozenSellPosition)).multiply(usdtShareNumber);
-            BigDecimal temp3 = usdtSellPrincipalAmount.divide(temp2, 4, BigDecimal.ROUND_DOWN);
+            BigDecimal temp3 = usdtSellPrincipalAmount.divide(temp2, 8, BigDecimal.ROUND_DOWN);
             BigDecimal temp4 = BigDecimal.valueOf(1).subtract(temp1).subtract(closeFee).add(temp3);
 
             BigDecimal lessBlastPrice = temp4.multiply(usdtSellPrice);
