@@ -1081,7 +1081,6 @@ public class OrderController {
         }
 
         if (wallet.getUsdtPattern().equals(ContractOrderPattern.FIXED)){
-            log.info("FIXED ...");
             BigDecimal temp1 = maintenanceMarginRate.divide(usdtBuyLeverage, 8, BigDecimal.ROUND_DOWN);
             BigDecimal temp2 = (usdtBuyPosition.add(usdtFrozenBuyPosition)).multiply(usdtShareNumber);
             BigDecimal temp3 = usdtBuyPrincipalAmount.divide(temp2, 8, BigDecimal.ROUND_DOWN);
@@ -1137,7 +1136,6 @@ public class OrderController {
 
 
         if (wallet.getUsdtPattern().equals(ContractOrderPattern.FIXED)){
-            log.info("FIXED ...");
 
             BigDecimal temp1 = maintenanceMarginRate.divide(usdtSellLeverage, 8, BigDecimal.ROUND_DOWN);
             BigDecimal temp2 = (usdtSellPosition.add(usdtFrozenSellPosition)).multiply(usdtShareNumber);
