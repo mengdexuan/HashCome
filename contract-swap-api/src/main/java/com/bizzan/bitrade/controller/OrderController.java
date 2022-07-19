@@ -1068,6 +1068,11 @@ public class OrderController {
 
         BigDecimal closeFee = usdtBuyPosition.add(usdtFrozenBuyPosition).multiply(usdtShareNumber).multiply(wallet.getContractCoin().getCloseFee());
 
+        log.info("设置多单爆仓价 maintenanceMarginRate:{},usdtBuyLeverage:{}" +
+                        ",usdtBuyPrincipalAmount:{},usdtBuyPosition:{},usdtFrozenBuyPosition:{},usdtShareNumber:{}" +
+                        ",usdtBuyPrice:{},closeFee:{}",maintenanceMarginRate,usdtBuyLeverage,usdtBuyPrincipalAmount,
+                usdtBuyPosition,usdtFrozenBuyPosition,usdtShareNumber,usdtBuyPrice,closeFee);
+
         if (usdtBuyPosition.compareTo(BigDecimal.valueOf(0))==0&&usdtFrozenBuyPosition.compareTo(BigDecimal.valueOf(0))==0){
             //持仓为空
             wallet.setMoreBlastPrice(BigDecimal.valueOf(0));
@@ -1075,6 +1080,7 @@ public class OrderController {
         }
 
         if (wallet.getUsdtPattern().equals(ContractOrderPattern.FIXED)){
+            log.info("FIXED ...");
             BigDecimal temp1 = maintenanceMarginRate.divide(usdtBuyLeverage, 8, BigDecimal.ROUND_DOWN);
             BigDecimal temp2 = (usdtBuyPosition.add(usdtFrozenBuyPosition)).multiply(usdtShareNumber);
             BigDecimal temp3 = usdtBuyPrincipalAmount.divide(temp2, 8, BigDecimal.ROUND_DOWN);
@@ -1116,6 +1122,11 @@ public class OrderController {
 
         BigDecimal closeFee = usdtSellPosition.add(usdtFrozenSellPosition).multiply(usdtShareNumber).multiply(wallet.getContractCoin().getCloseFee());
 
+        log.info("设置空单爆仓价 maintenanceMarginRate:{},usdtSellLeverage:{}" +
+                ",usdtSellPrincipalAmount:{},usdtSellPosition:{},usdtFrozenSellPosition:{},usdtShareNumber:{}" +
+                ",usdtSellPrice:{},closeFee:{}",maintenanceMarginRate,usdtSellLeverage,usdtSellPrincipalAmount,
+                usdtSellPosition,usdtFrozenSellPosition,usdtShareNumber,usdtSellPrice,closeFee);
+
         if (usdtSellPosition.compareTo(BigDecimal.valueOf(0))==0&&usdtFrozenSellPosition.compareTo(BigDecimal.valueOf(0))==0){
             //持仓为空
             wallet.setLessBlastPrice(BigDecimal.valueOf(0));
@@ -1124,6 +1135,8 @@ public class OrderController {
 
 
         if (wallet.getUsdtPattern().equals(ContractOrderPattern.FIXED)){
+            log.info("FIXED ...");
+
             BigDecimal temp1 = maintenanceMarginRate.divide(usdtSellLeverage, 8, BigDecimal.ROUND_DOWN);
             BigDecimal temp2 = (usdtSellPosition.add(usdtFrozenSellPosition)).multiply(usdtShareNumber);
             BigDecimal temp3 = usdtSellPrincipalAmount.divide(temp2, 8, BigDecimal.ROUND_DOWN);
