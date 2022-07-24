@@ -195,8 +195,8 @@ public class MemberContractWalletService extends BaseService {
      * @param avaPrice
      * @param volume
      */
-    public void updateUsdtBuyPriceAndPosition(Long walletId, BigDecimal avaPrice, BigDecimal volume) {
-        memberContractWalletDao.updateUsdtBuyPriceAndPosition(walletId, avaPrice, volume);
+    public void updateUsdtBuyPriceAndPosition(Long walletId, BigDecimal avaPrice, BigDecimal volume, BigDecimal quantity) {
+        memberContractWalletDao.updateUsdtBuyPriceAndPosition(walletId, avaPrice, volume, quantity);
     }
 
     /**
@@ -205,35 +205,35 @@ public class MemberContractWalletService extends BaseService {
      * @param avaPrice
      * @param volume
      */
-    public void updateUsdtSellPriceAndPosition(Long walletId, BigDecimal avaPrice, BigDecimal volume) {
-        memberContractWalletDao.updateUsdtSellPriceAndPosition(walletId, avaPrice, volume);
+    public void updateUsdtSellPriceAndPosition(Long walletId, BigDecimal avaPrice, BigDecimal volume, BigDecimal quantity) {
+        memberContractWalletDao.updateUsdtSellPriceAndPosition(walletId, avaPrice, volume, quantity);
     }
 
-    public void decreaseUsdtSellPositionAndPrincipalAmount(Long walletId, BigDecimal volume, BigDecimal principalAmount) {
-        memberContractWalletDao.decreaseUsdtSellPositionAndPrincipalAmount(walletId, volume, principalAmount);
+    public void decreaseUsdtSellPositionAndPrincipalAmount(Long walletId, BigDecimal volume, BigDecimal principalAmount, BigDecimal quantity) {
+        memberContractWalletDao.decreaseUsdtSellPositionAndPrincipalAmount(walletId, volume, principalAmount, quantity);
     }
 
-    public void decreaseUsdtFrozenSellPositionAndPrincipalAmount(Long walletId, BigDecimal volume, BigDecimal principalAmount) {
-        memberContractWalletDao.decreaseUsdtFrozenSellPositionAndPrincipalAmount(walletId, volume, principalAmount);
+    public void decreaseUsdtFrozenSellPositionAndPrincipalAmount(Long walletId, BigDecimal volume, BigDecimal principalAmount, BigDecimal quantity) {
+        memberContractWalletDao.decreaseUsdtFrozenSellPositionAndPrincipalAmount(walletId, volume, principalAmount, quantity);
     }
 
-    public void decreaseUsdtBuyPositionAndPrincipalAmount(Long walletId, BigDecimal volume, BigDecimal principalAmount) {
-        memberContractWalletDao.decreaseUsdtBuyPositionAndPrincipalAmount(walletId, volume, principalAmount);
+    public void decreaseUsdtBuyPositionAndPrincipalAmount(Long walletId, BigDecimal volume, BigDecimal principalAmount, BigDecimal quantity) {
+        memberContractWalletDao.decreaseUsdtBuyPositionAndPrincipalAmount(walletId, volume, principalAmount, quantity);
     }
-    public void decreaseUsdtFrozenBuyPositionAndPrincipalAmount(Long walletId, BigDecimal volume, BigDecimal principalAmount) {
-        memberContractWalletDao.decreaseUsdtFrozenBuyPositionAndPrincipalAmount(walletId, volume, principalAmount);
+    public void decreaseUsdtFrozenBuyPositionAndPrincipalAmount(Long walletId, BigDecimal volume, BigDecimal principalAmount, BigDecimal quantity) {
+        memberContractWalletDao.decreaseUsdtFrozenBuyPositionAndPrincipalAmount(walletId, volume, principalAmount, quantity);
     }
-    public void freezeUsdtSellPosition(Long walletId, BigDecimal volume) {
-        memberContractWalletDao.freezeUsdtSellPosition(walletId, volume);
+    public void freezeUsdtSellPosition(Long walletId, BigDecimal volume, BigDecimal quantity) {
+        memberContractWalletDao.freezeUsdtSellPosition(walletId, volume, quantity);
     }
-    public void thrawUsdtSellPosition(Long walletId, BigDecimal volume) {
-        memberContractWalletDao.thrawUsdtSellPosition(walletId, volume);
+    public void thrawUsdtSellPosition(Long walletId, BigDecimal volume, BigDecimal quantity) {
+        memberContractWalletDao.thrawUsdtSellPosition(walletId, volume, quantity);
     }
-    public void freezeUsdtBuyPosition(Long walletId, BigDecimal volume) {
-        memberContractWalletDao.freezeUsdtBuyPosition(walletId, volume);
+    public void freezeUsdtBuyPosition(Long walletId, BigDecimal volume, BigDecimal quantity) {
+        memberContractWalletDao.freezeUsdtBuyPosition(walletId, volume, quantity);
     }
-    public void thrawUsdtBuyPosition(Long walletId, BigDecimal volume) {
-        memberContractWalletDao.thrawUsdtBuyPosition(walletId, volume);
+    public void thrawUsdtBuyPosition(Long walletId, BigDecimal volume, BigDecimal quantity) {
+        memberContractWalletDao.thrawUsdtBuyPosition(walletId, volume, quantity);
     }
     public void modifyUsdtBuyLeverage(Long walletId, BigDecimal leverage) {
         memberContractWalletDao.modifyUsdtBuyLeverage(walletId, leverage);

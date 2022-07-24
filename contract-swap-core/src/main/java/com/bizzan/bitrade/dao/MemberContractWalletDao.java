@@ -124,45 +124,51 @@ public interface MemberContractWalletDao extends BaseDao<MemberContractWallet> {
     @Query("update MemberContractWallet wallet set wallet.usdtSellPrincipalAmount=wallet.usdtSellPrincipalAmount - :amount where wallet.id = :walletId and wallet.usdtSellPrincipalAmount >= :amount")
     void decreaseUsdtSellPrincipalAmountWithoutBalance(@Param("walletId") Long walletId, @Param("amount") BigDecimal amount);
 
+    // ******************* 开仓成交
     @Transactional(rollbackFor = Exception.class)
     @Modifying
-    @Query("update MemberContractWallet wallet set wallet.usdtBuyPrice=:avaPrice,wallet.usdtBuyPosition=wallet.usdtBuyPosition + :volume where wallet.id = :walletId")
-    void updateUsdtBuyPriceAndPosition(@Param("walletId") Long walletId, @Param("avaPrice") BigDecimal avaPrice, @Param("volume") BigDecimal volume);
+    @Query("update MemberContractWallet wallet set wallet.usdtBuyPrice=:avaPrice,wallet.usdtBuyPosition=wallet.usdtBuyPosition + :volume,wallet.coinBuyQuantity=wallet.coinBuyQuantity + :quantity where wallet.id = :walletId")
+    void updateUsdtBuyPriceAndPosition(@Param("walletId") Long walletId, @Param("avaPrice") BigDecimal avaPrice, @Param("volume") BigDecimal volume, @Param("quantity") BigDecimal quantity);
 
     @Transactional(rollbackFor = Exception.class)
     @Modifying
-    @Query("update MemberContractWallet wallet set wallet.usdtSellPrice=:avaPrice,wallet.usdtSellPosition=wallet.usdtSellPosition + :volume where wallet.id = :walletId")
-    void updateUsdtSellPriceAndPosition(@Param("walletId") Long walletId, @Param("avaPrice") BigDecimal avaPrice, @Param("volume") BigDecimal volume);
+    @Query("update MemberContractWallet wallet set wallet.usdtSellPrice=:avaPrice,wallet.usdtSellPosition=wallet.usdtSellPosition + :volume,wallet.coinSellQuantity=wallet.coinSellQuantity + :quantity where wallet.id = :walletId")
+    void updateUsdtSellPriceAndPosition(@Param("walletId") Long walletId, @Param("avaPrice") BigDecimal avaPrice, @Param("volume") BigDecimal volume, @Param("quantity") BigDecimal quantity);
+
+    // ******************* 平仓成交
+    @Transactional(rollbackFor = Exception.class)
+    @Modifying
+    @Query("update MemberContractWallet wallet set wallet.usdtSellPrincipalAmount=wallet.usdtSellPrincipalAmount - :pAmount,wallet.usdtSellPosition=wallet.usdtSellPosition - :volume,wallet.coinSellQuantity=wallet.coinSellQuantity - :quantity where wallet.id = :walletId and wallet.usdtSellPrincipalAmount>=:pAmount and wallet.usdtSellPosition>=:volume")
+    void decreaseUsdtSellPositionAndPrincipalAmount(@Param("walletId") Long walletId, @Param("volume") BigDecimal volume, @Param("pAmount") BigDecimal pAmount, @Param("quantity") BigDecimal quantity);
 
     @Transactional(rollbackFor = Exception.class)
     @Modifying
-    @Query("update MemberContractWallet wallet set wallet.usdtSellPrincipalAmount=wallet.usdtSellPrincipalAmount - :pAmount,wallet.usdtSellPosition=wallet.usdtSellPosition - :volume where wallet.id = :walletId and wallet.usdtSellPrincipalAmount>=:pAmount and wallet.usdtSellPosition>=:volume")
-    void decreaseUsdtSellPositionAndPrincipalAmount(@Param("walletId") Long walletId, @Param("volume") BigDecimal volume, @Param("pAmount") BigDecimal pAmount);
+    @Query("update MemberContractWallet wallet set wallet.usdtBuyPrincipalAmount=wallet.usdtBuyPrincipalAmount - :pAmount,wallet.usdtBuyPosition=wallet.usdtBuyPosition - :volume,wallet.coinBuyQuantity=wallet.coinBuyQuantity - :quantity where wallet.id = :walletId and wallet.usdtBuyPrincipalAmount>=:pAmount and wallet.usdtBuyPosition>=:volume")
+    void decreaseUsdtBuyPositionAndPrincipalAmount(@Param("walletId") Long walletId, @Param("volume") BigDecimal volume, @Param("pAmount") BigDecimal pAmount, @Param("quantity") BigDecimal quantity);
 
+    // ******************* 挂单
     @Transactional(rollbackFor = Exception.class)
     @Modifying
-    @Query("update MemberContractWallet wallet set wallet.usdtBuyPrincipalAmount=wallet.usdtBuyPrincipalAmount - :pAmount,wallet.usdtBuyPosition=wallet.usdtBuyPosition - :volume where wallet.id = :walletId and wallet.usdtBuyPrincipalAmount>=:pAmount and wallet.usdtBuyPosition>=:volume")
-    void decreaseUsdtBuyPositionAndPrincipalAmount(@Param("walletId") Long walletId, @Param("volume") BigDecimal volume, @Param("pAmount") BigDecimal pAmount);
+    @Query("update MemberContractWallet wallet set wallet.usdtFrozenSellPosition = wallet.usdtFrozenSellPosition + :amount,wallet.usdtSellPosition=wallet.usdtSellPosition - :amount,wallet.coinFrozenSellQuantity = wallet.coinFrozenSellQuantity + :quantity,wallet.coinSellQuantity=wallet.coinSellQuantity - :quantity where wallet.id = :walletId and wallet.usdtSellPosition >= :amount")
+    void freezeUsdtSellPosition(@Param("walletId") Long walletId, @Param("amount") BigDecimal amount, @Param("quantity") BigDecimal quantity);
 
+    // ******************* 挂单撤销
     @Transactional(rollbackFor = Exception.class)
     @Modifying
-    @Query("update MemberContractWallet wallet set wallet.usdtFrozenSellPosition = wallet.usdtFrozenSellPosition + :amount,wallet.usdtSellPosition=wallet.usdtSellPosition - :amount where wallet.id = :walletId and wallet.usdtSellPosition >= :amount")
-    void freezeUsdtSellPosition(@Param("walletId") Long walletId, @Param("amount") BigDecimal amount);
+    @Query("update MemberContractWallet wallet set wallet.usdtFrozenSellPosition = wallet.usdtFrozenSellPosition - :amount,wallet.usdtSellPosition=wallet.usdtSellPosition + :amount,wallet.coinFrozenSellQuantity = wallet.coinFrozenSellQuantity - :quantity,wallet.coinSellQuantity=wallet.coinSellQuantity + :quantity where wallet.id = :walletId and wallet.usdtFrozenSellPosition >= :amount")
+    void thrawUsdtSellPosition(@Param("walletId") Long walletId, @Param("amount") BigDecimal amount, @Param("quantity") BigDecimal quantity);
 
+    // ******************* 挂单
     @Transactional(rollbackFor = Exception.class)
     @Modifying
-    @Query("update MemberContractWallet wallet set wallet.usdtFrozenSellPosition = wallet.usdtFrozenSellPosition - :amount,wallet.usdtSellPosition=wallet.usdtSellPosition + :amount where wallet.id = :walletId and wallet.usdtFrozenSellPosition >= :amount")
-    void thrawUsdtSellPosition(@Param("walletId") Long walletId, @Param("amount") BigDecimal amount);
+    @Query("update MemberContractWallet wallet set wallet.usdtFrozenBuyPosition = wallet.usdtFrozenBuyPosition + :amount,wallet.usdtBuyPosition=wallet.usdtBuyPosition - :amount,wallet.coinFrozenBuyQuantity = wallet.coinFrozenBuyQuantity + :quantity,wallet.coinBuyQuantity=wallet.coinBuyQuantity - :quantity where wallet.id = :walletId and wallet.usdtBuyPosition >= :amount")
+    void freezeUsdtBuyPosition(@Param("walletId") Long walletId, @Param("amount") BigDecimal amount, @Param("quantity") BigDecimal quantity);
 
+    // ******************* 挂单撤销
     @Transactional(rollbackFor = Exception.class)
     @Modifying
-    @Query("update MemberContractWallet wallet set wallet.usdtFrozenBuyPosition = wallet.usdtFrozenBuyPosition + :amount,wallet.usdtBuyPosition=wallet.usdtBuyPosition - :amount where wallet.id = :walletId and wallet.usdtBuyPosition >= :amount")
-    void freezeUsdtBuyPosition(@Param("walletId") Long walletId, @Param("amount") BigDecimal amount);
-
-    @Transactional(rollbackFor = Exception.class)
-    @Modifying
-    @Query("update MemberContractWallet wallet set wallet.usdtFrozenBuyPosition = wallet.usdtFrozenBuyPosition - :amount,wallet.usdtBuyPosition=wallet.usdtBuyPosition + :amount where wallet.id = :walletId and wallet.usdtFrozenBuyPosition >= :amount")
-    void thrawUsdtBuyPosition(@Param("walletId") Long walletId, @Param("amount") BigDecimal amount);
+    @Query("update MemberContractWallet wallet set wallet.usdtFrozenBuyPosition = wallet.usdtFrozenBuyPosition - :amount,wallet.usdtBuyPosition=wallet.usdtBuyPosition + :amount,wallet.coinFrozenBuyQuantity = wallet.coinFrozenBuyQuantity - :quantity,wallet.coinBuyQuantity=wallet.coinBuyQuantity + :quantity where wallet.id = :walletId and wallet.usdtFrozenBuyPosition >= :amount")
+    void thrawUsdtBuyPosition(@Param("walletId") Long walletId, @Param("amount") BigDecimal amount, @Param("quantity") BigDecimal quantity);
 
     @Transactional(rollbackFor = Exception.class)
     @Modifying
@@ -184,21 +190,22 @@ public interface MemberContractWalletDao extends BaseDao<MemberContractWallet> {
     @Query("update MemberContractWallet wallet set wallet.usdtSellPrincipalAmount=wallet.usdtSellPrincipalAmount + :amount,wallet.usdtFrozenBalance=wallet.usdtFrozenBalance - :amount where wallet.id = :walletId and wallet.usdtFrozenBalance >= :amount")
     void increaseUsdtSellPrincipalAmountWithFrozen(@Param("walletId") Long walletId, @Param("amount") BigDecimal amount);
 
+    // ******************* 挂单成交
     @Transactional(rollbackFor = Exception.class)
     @Modifying
-    @Query("update MemberContractWallet wallet set wallet.usdtSellPrincipalAmount=wallet.usdtSellPrincipalAmount - :pAmount,wallet.usdtFrozenSellPosition=wallet.usdtFrozenSellPosition - :volume where wallet.id = :walletId and wallet.usdtSellPrincipalAmount>=:pAmount and wallet.usdtFrozenSellPosition>=:volume")
-    void decreaseUsdtFrozenSellPositionAndPrincipalAmount(@Param("walletId") Long walletId, @Param("volume") BigDecimal volume, @Param("pAmount") BigDecimal pAmount);
+    @Query("update MemberContractWallet wallet set wallet.usdtSellPrincipalAmount=wallet.usdtSellPrincipalAmount - :pAmount,wallet.usdtFrozenSellPosition=wallet.usdtFrozenSellPosition - :volume,wallet.coinFrozenSellQuantity=wallet.coinFrozenSellQuantity - :quantity where wallet.id = :walletId and wallet.usdtSellPrincipalAmount>=:pAmount and wallet.usdtFrozenSellPosition>=:volume")
+    void decreaseUsdtFrozenSellPositionAndPrincipalAmount(@Param("walletId") Long walletId, @Param("volume") BigDecimal volume, @Param("pAmount") BigDecimal pAmount, @Param("quantity") BigDecimal quantity);
 
     @Transactional(rollbackFor = Exception.class)
     @Modifying
-    @Query("update MemberContractWallet wallet set wallet.usdtBuyPrincipalAmount=wallet.usdtBuyPrincipalAmount - :pAmount,wallet.usdtFrozenBuyPosition=wallet.usdtFrozenBuyPosition - :volume where wallet.id = :walletId and wallet.usdtBuyPrincipalAmount>=:pAmount and wallet.usdtFrozenBuyPosition>=:volume")
-    void decreaseUsdtFrozenBuyPositionAndPrincipalAmount(@Param("walletId") Long walletId, @Param("volume") BigDecimal volume, @Param("pAmount") BigDecimal pAmount);
+    @Query("update MemberContractWallet wallet set wallet.usdtBuyPrincipalAmount=wallet.usdtBuyPrincipalAmount - :pAmount,wallet.usdtFrozenBuyPosition=wallet.usdtFrozenBuyPosition - :volume,wallet.coinFrozenBuyQuantity=wallet.coinFrozenBuyQuantity - :quantity where wallet.id = :walletId and wallet.usdtBuyPrincipalAmount>=:pAmount and wallet.usdtFrozenBuyPosition>=:volume")
+    void decreaseUsdtFrozenBuyPositionAndPrincipalAmount(@Param("walletId") Long walletId, @Param("volume") BigDecimal volume, @Param("pAmount") BigDecimal pAmount, @Param("quantity") BigDecimal quantity);
 
     //资金 费率
     @Query(value = "select * from member_contract_wallet as wallet where (wallet.usdt_buy_position > 0 or wallet.usdt_sell_position > 0 or wallet.usdt_frozen_buy_position > 0 or wallet.usdt_frozen_sell_position > 0) and wallet.contract_id=:contractId", nativeQuery = true)
     List<MemberContractWallet> findAllNeedSync(@Param("contractId") Long contractId);
 
-    @Query(value = "select * from member_contract_wallet as wallet where (wallet.usdt_buy_position > 0 or wallet.usdt_sell_position > 0)", nativeQuery = true)
+    @Query(value = "select * from member_contract_wallet as wallet where (wallet.usdt_buy_position > 0 or wallet.usdt_sell_position > 0 or wallet.usdt_frozen_buy_position > 0 or wallet.usdt_frozen_sell_position > 0)", nativeQuery = true)
     List<MemberContractWallet> findAllPosition();
 
     /**
@@ -207,7 +214,7 @@ public interface MemberContractWalletDao extends BaseDao<MemberContractWallet> {
      */
     @Transactional(rollbackFor = Exception.class)
     @Modifying
-    @Query("update MemberContractWallet wallet set wallet.usdtBuyPrincipalAmount=0,wallet.usdtFrozenBuyPosition=0,wallet.usdtBuyPosition=0 where wallet.id = :walletId")
+    @Query("update MemberContractWallet wallet set wallet.usdtBuyPrincipalAmount=0,wallet.usdtFrozenBuyPosition=0,wallet.usdtBuyPosition=0,wallet.coinFrozenBuyQuantity=0,wallet.coinBuyQuantity=0 where wallet.id = :walletId")
     void blastBuy(@Param("walletId") Long walletId);
 
     /**
@@ -216,7 +223,7 @@ public interface MemberContractWalletDao extends BaseDao<MemberContractWallet> {
      */
     @Transactional(rollbackFor = Exception.class)
     @Modifying
-    @Query("update MemberContractWallet wallet set wallet.usdtSellPrincipalAmount=0,wallet.usdtFrozenSellPosition=0,wallet.usdtSellPosition=0 where wallet.id = :walletId")
+    @Query("update MemberContractWallet wallet set wallet.usdtSellPrincipalAmount=0,wallet.usdtFrozenSellPosition=0,wallet.usdtSellPosition=0,wallet.coinFrozenSellQuantity=0,wallet.coinSellQuantity=0  where wallet.id = :walletId")
     void blastSell(@Param("walletId") Long walletId);
 
     @Transactional(rollbackFor = Exception.class)

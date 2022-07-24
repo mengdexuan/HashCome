@@ -45,6 +45,12 @@ public class MemberContractWallet {
     @Column(columnDefinition = "decimal(18,8) DEFAULT 0 comment '开多仓位'")
     private BigDecimal usdtFrozenBuyPosition;// 冻结仓位(USDT本位)
 
+    @Column(columnDefinition = "decimal(18,8) DEFAULT 0 comment '开多币种数量'")
+    private BigDecimal coinBuyQuantity;// 开空仓位(USDT本位,多少张)
+
+    @Column(columnDefinition = "decimal(18,8) DEFAULT 0 comment '开多币种数量'")
+    private BigDecimal coinFrozenBuyQuantity;// 冻结仓位(USDT本位,多少张)
+
     @Column(columnDefinition = "decimal(18,8) DEFAULT 0 comment '多仓均价'")
     private BigDecimal usdtBuyPrice;// 多仓均价(USDT本位)
 
@@ -56,6 +62,12 @@ public class MemberContractWallet {
 
     @Column(columnDefinition = "decimal(18,8) DEFAULT 0 comment '开空仓位'")
     private BigDecimal usdtFrozenSellPosition;// 冻结仓位(USDT本位,多少张)
+
+    @Column(columnDefinition = "decimal(18,8) DEFAULT 0 comment '开空币种数量'")
+    private BigDecimal coinSellQuantity;// 开空仓位(USDT本位,多少张)
+
+    @Column(columnDefinition = "decimal(18,8) DEFAULT 0 comment '开空币种数量'")
+    private BigDecimal coinFrozenSellQuantity;// 冻结仓位(USDT本位,多少张)
 
     @Column(columnDefinition = "decimal(18,8) DEFAULT 0 comment '开空仓位'")
     private BigDecimal usdtShareNumber;// 合约面值(USDT本位,1张=多少USDT)

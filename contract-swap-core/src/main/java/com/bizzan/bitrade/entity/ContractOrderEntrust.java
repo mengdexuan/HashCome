@@ -68,6 +68,9 @@ public class ContractOrderEntrust implements Serializable {
     @Column(columnDefinition = "decimal(18,8) DEFAULT 0 comment '委托数量'")
     private BigDecimal volume;// 委托数量（张）
 
+    @Column(columnDefinition = "decimal(18,8) DEFAULT 0 comment '币数量'")
+    private BigDecimal quantity;// 币数量（张）
+
     @Column(columnDefinition = "decimal(18,8) DEFAULT 0 comment '委托数量'")
     private BigDecimal tradedVolume;// 成交数量（张）
 

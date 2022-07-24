@@ -194,12 +194,12 @@ public class ContractCoinMatch {
             logger.info("计算开仓均价（开多）：当前持仓张数（{}）,当前持仓均价（{}）, 委托张数（{}），成交价格价格（{}）", memberContractWallet.getUsdtBuyPosition(), memberContractWallet.getUsdtBuyPrice(), order.getVolume(), openPrice);
             avaPrice = memberContractWallet.getUsdtBuyPosition().multiply(memberContractWallet.getUsdtBuyPrice()).add(order.getVolume().multiply(openPrice)).divide(memberContractWallet.getUsdtBuyPosition().add(order.getVolume()), 8, BigDecimal.ROUND_DOWN);
             // 更新持仓均价和持仓数量（多仓）
-            memberContractWalletService.updateUsdtBuyPriceAndPosition(memberContractWallet.getId(), avaPrice, order.getVolume());
+            memberContractWalletService.updateUsdtBuyPriceAndPosition(memberContractWallet.getId(), avaPrice, order.getVolume(), order.getQuantity());
         } else {
             logger.info("计算开仓均价（开多）：当前持仓张数（{}）,当前持仓均价（{}）, 委托张数（{}），成交价格价格（{}）", memberContractWallet.getUsdtSellPosition(), memberContractWallet.getUsdtSellPrice(), order.getVolume(), openPrice);
             avaPrice = memberContractWallet.getUsdtSellPosition().multiply(memberContractWallet.getUsdtSellPrice()).add(order.getVolume().multiply(openPrice)).divide(memberContractWallet.getUsdtSellPosition().add(order.getVolume()), 8, BigDecimal.ROUND_DOWN);
             // 更新持仓均价和持仓数量（空仓）
-            memberContractWalletService.updateUsdtSellPriceAndPosition(memberContractWallet.getId(), avaPrice, order.getVolume());
+            memberContractWalletService.updateUsdtSellPriceAndPosition(memberContractWallet.getId(), avaPrice, order.getVolume(), order.getQuantity());
         }
 
         if(memberContractWallet.getUsdtShareNumber().compareTo(order.getShareNumber()) != 0) {
@@ -248,7 +248,7 @@ public class ContractCoinMatch {
             BigDecimal closeFee = order.getVolume().multiply(memberContractWallet.getUsdtShareNumber()).multiply(contractCoin.getCloseFee());
 
             // 扣除用户空仓持仓冻结和相应的保证金
-            memberContractWalletService.decreaseUsdtFrozenSellPositionAndPrincipalAmount(memberContractWallet.getId(), order.getVolume(), principalAmount);
+            memberContractWalletService.decreaseUsdtFrozenSellPositionAndPrincipalAmount(memberContractWallet.getId(), order.getVolume(), principalAmount, order.getQuantity());
             // 增加用户余额
             memberContractWalletService.increaseUsdtBalance(memberContractWallet.getId(), principalAmount.add(pL).subtract(closeFee));
             // 平台增加平仓手续费
@@ -285,7 +285,7 @@ public class ContractCoinMatch {
             BigDecimal closeFee = order.getVolume().multiply(memberContractWallet.getUsdtShareNumber()).multiply(contractCoin.getCloseFee());
 
             // 扣除用户多仓持仓 和 保证金
-            memberContractWalletService.decreaseUsdtFrozenBuyPositionAndPrincipalAmount(memberContractWallet.getId(), order.getVolume(), principalAmount);
+            memberContractWalletService.decreaseUsdtFrozenBuyPositionAndPrincipalAmount(memberContractWallet.getId(), order.getVolume(), principalAmount, order.getQuantity());
             // 增加用户余额
             memberContractWalletService.increaseUsdtBalance(memberContractWallet.getId(), principalAmount.add(pL).subtract(closeFee));
             // 平台增加平仓手续费
@@ -630,7 +630,7 @@ public class ContractCoinMatch {
                             continue;
                         }else{
                             // 冻结空仓持仓
-                            memberContractWalletService.freezeUsdtSellPosition(wallet.getId(), order.getVolume());
+                            memberContractWalletService.freezeUsdtSellPosition(wallet.getId(), order.getVolume(), order.getQuantity());
                         }
                     } else { // 卖出平多
                         // 检查多单持仓量是否足够
@@ -639,7 +639,7 @@ public class ContractCoinMatch {
                             continue;
                         }else{
                             // 冻结空仓持仓
-                            memberContractWalletService.freezeUsdtBuyPosition(wallet.getId(), order.getVolume());
+                            memberContractWalletService.freezeUsdtBuyPosition(wallet.getId(), order.getVolume(), order.getQuantity());
                         }
                     }
                     // 触发委托
@@ -963,11 +963,11 @@ public class ContractCoinMatch {
                             // 平仓单，撤单需要解冻仓位Position
                             if (orderEntrust.getDirection() == ContractOrderDirection.BUY) { // 平仓单 - 买入平空： 释放空仓冻结
                                 if(!isBlast) {
-                                    memberContractWalletService.thrawUsdtSellPosition(wallet.getId(), orderEntrust.getVolume());
+                                    memberContractWalletService.thrawUsdtSellPosition(wallet.getId(), orderEntrust.getVolume(), order.getQuantity());
                                 }
                             } else {
                                 if(!isBlast) {
-                                    memberContractWalletService.thrawUsdtBuyPosition(wallet.getId(), orderEntrust.getVolume());
+                                    memberContractWalletService.thrawUsdtBuyPosition(wallet.getId(), orderEntrust.getVolume(), order.getQuantity());
                                 }
                             }
                         }else{
