@@ -125,8 +125,14 @@ public class OrderController {
         }
 
         if (quantity != null) {
-            BigDecimal currentPrice = contractCoinMatchFactory.getContractCoinMatch(contractCoin.getSymbol()).getNowPrice();
-            usdtNum = quantity.multiply(currentPrice);
+            if (type == ContractOrderType.LIMIT_PRICE || type == ContractOrderType.SPOT_LIMIT) {
+                if (entrustPrice != null) {
+                    usdtNum = quantity.multiply(entrustPrice);
+                }
+            } else {
+                BigDecimal currentPrice = contractCoinMatchFactory.getContractCoinMatch(contractCoin.getSymbol()).getNowPrice();
+                usdtNum = quantity.multiply(currentPrice);
+            }
         }
 
         if (usdtNum != null) {
