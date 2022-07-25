@@ -445,8 +445,14 @@ public class OrderController {
 
         if (quantity != null) {
             if (direction == ContractOrderDirection.BUY) {
+                if (memberContractWallet.getCoinSellQuantity().compareTo(quantity) < 0) {
+                    return MessageResult.error(500, "委托量大于可平仓量");
+                }
                 volume = quantity.divide(memberContractWallet.getCoinSellQuantity(), 8, BigDecimal.ROUND_DOWN ).multiply(memberContractWallet.getUsdtSellPosition());
             } else {
+                if (memberContractWallet.getCoinBuyQuantity().compareTo(quantity) < 0) {
+                    return MessageResult.error(500, "委托量大于可平仓量");
+                }
                 volume = quantity.divide(memberContractWallet.getCoinBuyQuantity(), 8, BigDecimal.ROUND_DOWN).multiply(memberContractWallet.getUsdtBuyPosition());
             }
         }
