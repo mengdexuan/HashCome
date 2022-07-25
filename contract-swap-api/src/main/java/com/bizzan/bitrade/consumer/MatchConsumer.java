@@ -198,7 +198,7 @@ public class MatchConsumer {
         }
         String symbol = json.getString("symbol");
         BigDecimal price = json.getBigDecimal("price");
-        contractCoinMatchFactory.getContractCoinMatch(symbol).refreshBlastPrice(price);
+        contractCoinMatchFactory.getContractCoinMatch(symbol).refreshBlastPrice(price, contractCoinMatchFactory);
     }
 
 }

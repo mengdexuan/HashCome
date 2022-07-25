@@ -30,7 +30,8 @@ public interface MemberContractWalletDao extends BaseDao<MemberContractWallet> {
      */
     @Transactional(rollbackFor = Exception.class)
     @Modifying
-    @Query("update MemberContractWallet wallet set wallet.usdtBalance = wallet.usdtBalance + :amount where wallet.id = :walletId")
+    //@Query("update MemberContractWallet wallet set wallet.usdtBalance = wallet.usdtBalance + :amount where wallet.id = :walletId")
+    @Query(value = "update member_contract_wallet mwallet, member_contract_wallet wallet set wallet.usdt_balance = wallet.usdt_balance + :amount where mwallet.member_id = wallet.member_id and mwallet.id = :walletId",nativeQuery = true)
     int increaseUsdtBalance(@Param("walletId") long walletId, @Param("amount") BigDecimal amount);
 
     /**
@@ -42,7 +43,8 @@ public interface MemberContractWalletDao extends BaseDao<MemberContractWallet> {
      */
     @Transactional(rollbackFor = Exception.class)
     @Modifying
-    @Query("update MemberContractWallet wallet set wallet.usdtBalance = wallet.usdtBalance - :amount where wallet.id = :walletId and wallet.usdtBalance >= :amount")
+    //@Query("update MemberContractWallet wallet set wallet.usdtBalance = wallet.usdtBalance - :amount where wallet.id = :walletId and wallet.usdtBalance >= :amount")
+    @Query(value = "update member_contract_wallet mwallet, member_contract_wallet wallet set wallet.usdt_balance = wallet.usdt_balance - :amount where mwallet.member_id = wallet.member_id and mwallet.id = :walletId and wallet.usdt_balance >= :amount",nativeQuery = true)
     int decreaseUsdtBalance(@Param("walletId") long walletId, @Param("amount") BigDecimal amount);
 
     /**
@@ -54,7 +56,8 @@ public interface MemberContractWalletDao extends BaseDao<MemberContractWallet> {
      */
     @Transactional(rollbackFor = Exception.class)
     @Modifying
-    @Query("update MemberContractWallet wallet set wallet.usdtBalance = wallet.usdtBalance - :amount,wallet.usdtFrozenBalance=wallet.usdtFrozenBalance + :amount where wallet.id = :walletId and wallet.usdtBalance >= :amount")
+    //@Query("update MemberContractWallet wallet set wallet.usdtBalance = wallet.usdtBalance - :amount,wallet.usdtFrozenBalance=wallet.usdtFrozenBalance + :amount where wallet.id = :walletId and wallet.usdtBalance >= :amount")
+    @Query(value = "update member_contract_wallet mwallet, member_contract_wallet wallet set wallet.usdt_balance = wallet.usdt_balance - :amount, wallet.usdt_frozen_balance = wallet.usdt_frozen_balance + :amount where mwallet.member_id = wallet.member_id and mwallet.id = :walletId and wallet.usdt_balance >= :amount",nativeQuery = true)
     int freezeUsdtBalance(@Param("walletId") long walletId, @Param("amount") BigDecimal amount);
 
     /**
@@ -66,7 +69,8 @@ public interface MemberContractWalletDao extends BaseDao<MemberContractWallet> {
      */
     @Transactional(rollbackFor = Exception.class)
     @Modifying
-    @Query("update MemberContractWallet wallet set wallet.usdtBalance = wallet.usdtBalance + :amount,wallet.usdtFrozenBalance=wallet.usdtFrozenBalance - :amount where wallet.id = :walletId and wallet.usdtFrozenBalance >= :amount")
+    //@Query("update MemberContractWallet wallet set wallet.usdtBalance = wallet.usdtBalance + :amount,wallet.usdtFrozenBalance=wallet.usdtFrozenBalance - :amount where wallet.id = :walletId and wallet.usdtFrozenBalance >= :amount")
+    @Query(value = "update member_contract_wallet mwallet, member_contract_wallet wallet set wallet.usdt_balance = wallet.usdt_balance + :amount, wallet.usdt_frozen_balance = wallet.usdt_frozen_balance - :amount where mwallet.member_id = wallet.member_id and mwallet.id = :walletId and wallet.usdt_frozen_balance >= :amount",nativeQuery = true)
     int thawUsdtBalance(@Param("walletId") long walletId, @Param("amount") BigDecimal amount);
 
     /**
@@ -78,7 +82,8 @@ public interface MemberContractWalletDao extends BaseDao<MemberContractWallet> {
      */
     @Transactional(rollbackFor = Exception.class)
     @Modifying
-    @Query("update MemberContractWallet wallet set wallet.usdtFrozenBalance=wallet.usdtFrozenBalance - :amount where wallet.id = :walletId and wallet.usdtFrozenBalance >= :amount")
+    //@Query("update MemberContractWallet wallet set wallet.usdtFrozenBalance=wallet.usdtFrozenBalance - :amount where wallet.id = :walletId and wallet.usdtFrozenBalance >= :amount")
+    @Query(value = "update member_contract_wallet mwallet, member_contract_wallet wallet set wallet.usdt_frozen_balance = wallet.usdt_frozen_balance - :amount where mwallet.member_id = wallet.member_id and mwallet.id = :walletId and wallet.usdt_frozen_balance >= :amount",nativeQuery = true)
     int decreaseUsdtFrozen(@Param("walletId") long walletId, @Param("amount") BigDecimal amount);
 
     /**
@@ -89,29 +94,34 @@ public interface MemberContractWalletDao extends BaseDao<MemberContractWallet> {
      */
     @Transactional(rollbackFor = Exception.class)
     @Modifying
-    @Query("update MemberContractWallet wallet set wallet.usdtFrozenBalance=wallet.usdtFrozenBalance + :amount where wallet.id = :walletId")
+    //@Query("update MemberContractWallet wallet set wallet.usdtFrozenBalance=wallet.usdtFrozenBalance + :amount where wallet.id = :walletId")
+    @Query(value = "update member_contract_wallet mwallet, member_contract_wallet wallet set wallet.usdt_frozen_balance = wallet.usdt_frozen_balance + :amount where mwallet.member_id = wallet.member_id and mwallet.id = :walletId",nativeQuery = true)
     int increaseUsdtFrozen(@Param("walletId") Long walletId, @Param("amount") BigDecimal amount);
 
     List<MemberContractWallet> findAllByMemberId(Long id);
 
     @Transactional(rollbackFor = Exception.class)
     @Modifying
-    @Query("update MemberContractWallet wallet set wallet.usdtBuyPrincipalAmount=wallet.usdtBuyPrincipalAmount + :amount,wallet.usdtBalance=wallet.usdtBalance - :amount where wallet.id = :walletId and wallet.usdtBalance >= :amount")
+    //@Query("update MemberContractWallet wallet set wallet.usdtBuyPrincipalAmount=wallet.usdtBuyPrincipalAmount + :amount,wallet.usdtBalance=wallet.usdtBalance - :amount where wallet.id = :walletId and wallet.usdtBalance >= :amount")
+    @Query(value = "update member_contract_wallet mwallet, member_contract_wallet wallet set mwallet.usdt_buy_principal_amount = mwallet.usdt_buy_principal_amount + :amount, wallet.usdt_balance = wallet.usdt_balance - :amount where mwallet.member_id = wallet.member_id and mwallet.id = :walletId and wallet.usdt_balance >= :amount",nativeQuery = true)
     void increaseUsdtBuyPrincipalAmount(@Param("walletId") Long walletId, @Param("amount") BigDecimal amount);
 
     @Transactional(rollbackFor = Exception.class)
     @Modifying
-    @Query("update MemberContractWallet wallet set wallet.usdtSellPrincipalAmount=wallet.usdtSellPrincipalAmount + :amount,wallet.usdtBalance=wallet.usdtBalance - :amount where wallet.id = :walletId and wallet.usdtBalance >= :amount")
+    //@Query("update MemberContractWallet wallet set wallet.usdtSellPrincipalAmount=wallet.usdtSellPrincipalAmount + :amount,wallet.usdtBalance=wallet.usdtBalance - :amount where wallet.id = :walletId and wallet.usdtBalance >= :amount")
+    @Query(value = "update member_contract_wallet mwallet, member_contract_wallet wallet set mwallet.usdt_sell_principal_amount = mwallet.usdt_sell_principal_amount + :amount, wallet.usdt_balance = wallet.usdt_balance - :amount where mwallet.member_id = wallet.member_id and mwallet.id = :walletId and wallet.usdt_balance >= :amount",nativeQuery = true)
     void increaseUsdtSellPrincipalAmount(@Param("walletId") Long walletId, @Param("amount") BigDecimal amount);
 
     @Transactional(rollbackFor = Exception.class)
     @Modifying
-    @Query("update MemberContractWallet wallet set wallet.usdtBalance=wallet.usdtBalance + :amount,wallet.usdtBuyPrincipalAmount=wallet.usdtBuyPrincipalAmount - :amount where wallet.id = :walletId and wallet.usdtBuyPrincipalAmount >= :amount")
+    //@Query("update MemberContractWallet wallet set wallet.usdtBalance=wallet.usdtBalance + :amount,wallet.usdtBuyPrincipalAmount=wallet.usdtBuyPrincipalAmount - :amount where wallet.id = :walletId and wallet.usdtBuyPrincipalAmount >= :amount")
+    @Query(value = "update member_contract_wallet mwallet, member_contract_wallet wallet set mwallet.usdt_buy_principal_amount = mwallet.usdt_buy_principal_amount - :amount, wallet.usdt_balance = wallet.usdt_balance + :amount where mwallet.member_id = wallet.member_id and mwallet.id = :walletId and mwallet.usdt_buy_principal_amount >= :amount",nativeQuery = true)
     void decreaseUsdtBuyPrincipalAmount(@Param("walletId") Long walletId, @Param("amount") BigDecimal amount);
 
     @Transactional(rollbackFor = Exception.class)
     @Modifying
-    @Query("update MemberContractWallet wallet set wallet.usdtBalance=wallet.usdtBalance + :amount,wallet.usdtSellPrincipalAmount=wallet.usdtSellPrincipalAmount - :amount where wallet.id = :walletId and wallet.usdtSellPrincipalAmount >= :amount")
+    //@Query("update MemberContractWallet wallet set wallet.usdtBalance=wallet.usdtBalance + :amount,wallet.usdtSellPrincipalAmount=wallet.usdtSellPrincipalAmount - :amount where wallet.id = :walletId and wallet.usdtSellPrincipalAmount >= :amount")
+    @Query(value = "update member_contract_wallet mwallet, member_contract_wallet wallet set mwallet.usdt_sell_principal_amount = mwallet.usdt_sell_principal_amount - :amount, wallet.usdt_balance = wallet.usdt_balance + :amount where mwallet.member_id = wallet.member_id and mwallet.id = :walletId and mwallet.usdt_sell_principal_amount >= :amount",nativeQuery = true)
     void decreaseUsdtSellPrincipalAmount(@Param("walletId") Long walletId, @Param("amount") BigDecimal amount);
 
     @Transactional(rollbackFor = Exception.class)
@@ -182,12 +192,14 @@ public interface MemberContractWalletDao extends BaseDao<MemberContractWallet> {
 
     @Transactional(rollbackFor = Exception.class)
     @Modifying
-    @Query("update MemberContractWallet wallet set wallet.usdtBuyPrincipalAmount=wallet.usdtBuyPrincipalAmount + :amount,wallet.usdtFrozenBalance=wallet.usdtFrozenBalance - :amount where wallet.id = :walletId and wallet.usdtFrozenBalance >= :amount")
+    //@Query("update MemberContractWallet wallet set wallet.usdtBuyPrincipalAmount=wallet.usdtBuyPrincipalAmount + :amount,wallet.usdtFrozenBalance=wallet.usdtFrozenBalance - :amount where wallet.id = :walletId and wallet.usdtFrozenBalance >= :amount")
+    @Query(value = "update member_contract_wallet mwallet, member_contract_wallet wallet set mwallet.usdt_buy_principal_amount = mwallet.usdt_buy_principal_amount + :amount, wallet.usdt_frozen_balance = wallet.usdt_frozen_balance - :amount where mwallet.member_id = wallet.member_id and mwallet.id = :walletId and wallet.usdt_frozen_balance >= :amount",nativeQuery = true)
     void increaseUsdtBuyPrincipalAmountWithFrozen(@Param("walletId") Long walletId, @Param("amount") BigDecimal amount);
 
     @Transactional(rollbackFor = Exception.class)
     @Modifying
-    @Query("update MemberContractWallet wallet set wallet.usdtSellPrincipalAmount=wallet.usdtSellPrincipalAmount + :amount,wallet.usdtFrozenBalance=wallet.usdtFrozenBalance - :amount where wallet.id = :walletId and wallet.usdtFrozenBalance >= :amount")
+    //@Query("update MemberContractWallet wallet set wallet.usdtSellPrincipalAmount=wallet.usdtSellPrincipalAmount + :amount,wallet.usdtFrozenBalance=wallet.usdtFrozenBalance - :amount where wallet.id = :walletId and wallet.usdtFrozenBalance >= :amount")
+    @Query(value = "update member_contract_wallet mwallet, member_contract_wallet wallet set mwallet.usdt_sell_principal_amount = mwallet.usdt_sell_principal_amount + :amount, wallet.usdt_frozen_balance = wallet.usdt_frozen_balance - :amount where mwallet.member_id = wallet.member_id and mwallet.id = :walletId and wallet.usdt_frozen_balance >= :amount",nativeQuery = true)
     void increaseUsdtSellPrincipalAmountWithFrozen(@Param("walletId") Long walletId, @Param("amount") BigDecimal amount);
 
     // ******************* 挂单成交

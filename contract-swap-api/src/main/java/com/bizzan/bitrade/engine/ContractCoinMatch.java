@@ -406,7 +406,7 @@ public class ContractCoinMatch {
      * 更新价格时，涉及到计划委托、止盈止损检测、爆仓检查，有一定耗时操作
      * @param newPrice
      */
-    public void refreshPrice(BigDecimal newPrice) {
+    public void refreshPrice(BigDecimal newPrice, ContractCoinMatchFactory matchFactory) {
         // 尚未启动
         if(!this.isStarted) return;
 
@@ -428,7 +428,7 @@ public class ContractCoinMatch {
             }
             // 开始检查委托
             isTriggerComplete = false;
-            this.process(newPrice);
+            this.process(newPrice, matchFactory);
         }
     }
 
@@ -456,9 +456,9 @@ public class ContractCoinMatch {
      * 处理委托单
      * @param newPrice
      */
-    public void process(BigDecimal newPrice) {
+    public void process(BigDecimal newPrice, ContractCoinMatchFactory matchFactory) {
         long startTick = System.currentTimeMillis();
-        this.processBlastCheck(newPrice);              // 1、爆仓处理
+        this.processBlastCheck(newPrice, matchFactory);              // 1、爆仓处理
         this.processOpenSpotEntrustList(newPrice);     // 2、开仓计划委托处理
         this.processCloseSpotEntrustList(newPrice);    // 3、平仓计划委托处理
         this.processCloseEntrustList(newPrice);        // 4、平仓委托处理
@@ -683,7 +683,7 @@ public class ContractCoinMatch {
     /**
      * 爆仓检查
      */
-    public void processBlastCheck(BigDecimal newPrice) {
+    public void processBlastCheck(BigDecimal newPrice, ContractCoinMatchFactory matchFactory) {
         // 同步最新用户仓位
         synchronized (memberContractWalletList){
             Iterator<MemberContractWallet> walletIterator = memberContractWalletList.iterator();
@@ -734,34 +734,59 @@ public class ContractCoinMatch {
                         }
                     }
                 }else{ // 全仓
+                    BigDecimal allBuyPL = BigDecimal.ZERO;
+                    BigDecimal allSellPL = BigDecimal.ZERO;
+                    BigDecimal allBuyPositionValue = BigDecimal.ZERO;
+                    BigDecimal allSellPositionValue = BigDecimal.ZERO;
+                    BigDecimal allBuyPrincipalAmount = BigDecimal.ZERO;
+                    BigDecimal allSellPrincipalAmount = BigDecimal.ZERO;
+                    BigDecimal allBuyCloseFee = BigDecimal.ZERO;
+                    BigDecimal allSellCloseFee = BigDecimal.ZERO;
+
+                   List<MemberContractWallet> items = memberContractWalletService.findAllByMemberId(wallet.getMemberId());
+                   for (MemberContractWallet item:items) {
+                       BigDecimal nowPrice = matchFactory.getContractCoinMatch(item.getContractCoin().getSymbol()).getNowPrice();
+                       // 计算多单收益
+                       BigDecimal buyPL = BigDecimal.ZERO;
+                       if(item.getUsdtBuyPrice().compareTo(BigDecimal.ZERO) > 0){
+                           buyPL = nowPrice.divide(item.getUsdtBuyPrice(), 8, BigDecimal.ROUND_DOWN).subtract(BigDecimal.ONE).multiply(item.getUsdtBuyPosition().add(item.getUsdtFrozenBuyPosition())).multiply(item.getUsdtShareNumber());
+                           allBuyPL = allBuyPL.add(buyPL);
+                       }
+                       // 计算空单收益
+                       BigDecimal sellPL = BigDecimal.ZERO;
+                       if(item.getUsdtSellPrice().compareTo(BigDecimal.ZERO) > 0){
+                           sellPL = BigDecimal.ONE.subtract(nowPrice.divide(item.getUsdtSellPrice(), 8, BigDecimal.ROUND_DOWN)).multiply(item.getUsdtSellPosition().add(item.getUsdtFrozenSellPosition())).multiply(item.getUsdtShareNumber());
+                           allSellPL = allSellPL.add(sellPL);
+                       }
+
+                       BigDecimal buyPositionValue = item.getUsdtBuyPosition().add(item.getUsdtFrozenBuyPosition()).multiply(item.getUsdtShareNumber()).divide(item.getUsdtBuyLeverage(), 8, BigDecimal.ROUND_DOWN);
+                       BigDecimal sellPositionValue = item.getUsdtSellPosition().add(item.getUsdtFrozenSellPosition()).multiply(item.getUsdtShareNumber()).divide(item.getUsdtSellLeverage(), 8, BigDecimal.ROUND_DOWN);
+
+                       BigDecimal buyCloseFee = item.getUsdtBuyPosition().add(item.getUsdtFrozenBuyPosition()).multiply(item.getUsdtShareNumber()).multiply(contractCoin.getCloseFee());
+                       BigDecimal sellCloseFee = item.getUsdtSellPosition().add(item.getUsdtFrozenSellPosition()).multiply(item.getUsdtShareNumber()).multiply(contractCoin.getCloseFee());
+
+                       allBuyPositionValue = allBuyPositionValue.add(buyPositionValue);
+                       allSellPositionValue = allSellPositionValue.add(sellPositionValue);
+                       allBuyCloseFee = allBuyCloseFee.add(buyCloseFee);
+                       allSellCloseFee = allSellCloseFee.add(sellCloseFee);
+                       allBuyPrincipalAmount = allBuyPrincipalAmount.add(item.getUsdtBuyPrincipalAmount());
+                       allSellPrincipalAmount = allSellPrincipalAmount.add(item.getUsdtSellPrincipalAmount());
+                   }
+
                     // 计算当前价格是否爆仓
-                    // 计算多单收益
-                    BigDecimal buyPL = BigDecimal.ZERO;
-                    if(wallet.getUsdtBuyPrice().compareTo(BigDecimal.ZERO) > 0){
-                        buyPL = newPrice.divide(wallet.getUsdtBuyPrice(), 8, BigDecimal.ROUND_DOWN).subtract(BigDecimal.ONE).multiply(wallet.getUsdtBuyPosition().add(wallet.getUsdtFrozenBuyPosition())).multiply(wallet.getUsdtShareNumber());
-                    }
-                    // 计算空单收益
-                    BigDecimal sellPL = BigDecimal.ZERO;
-                    if(wallet.getUsdtSellPrice().compareTo(BigDecimal.ZERO) > 0){
-                        sellPL = BigDecimal.ONE.subtract(newPrice.divide(wallet.getUsdtSellPrice(), 8, BigDecimal.ROUND_DOWN)).multiply(wallet.getUsdtSellPosition().add(wallet.getUsdtFrozenSellPosition())).multiply(wallet.getUsdtShareNumber());
-                    }
                     // 多单与空单收益之和
                     // 多空总收益为负数，并且多仓保证金 + 空仓保证金 + USDT余额都不足以支付亏损时爆仓
-                    if(buyPL.add(sellPL).compareTo(BigDecimal.ZERO) < 0) {
-
-                        BigDecimal buyPositionValue = wallet.getUsdtBuyPosition().add(wallet.getUsdtFrozenBuyPosition()).multiply(wallet.getUsdtShareNumber()).divide(wallet.getUsdtBuyLeverage(), 8, BigDecimal.ROUND_DOWN);
-                        BigDecimal sellPositionValue = wallet.getUsdtSellPosition().add(wallet.getUsdtFrozenSellPosition()).multiply(wallet.getUsdtShareNumber()).divide(wallet.getUsdtSellLeverage(), 8, BigDecimal.ROUND_DOWN);
-
-                        BigDecimal buyCloseFee = wallet.getUsdtBuyPosition().add(wallet.getUsdtFrozenBuyPosition()).multiply(wallet.getUsdtShareNumber()).multiply(contractCoin.getCloseFee());
-                        BigDecimal sellCloseFee = wallet.getUsdtSellPosition().add(wallet.getUsdtFrozenSellPosition()).multiply(wallet.getUsdtShareNumber()).multiply(contractCoin.getCloseFee());
-
+                    if(allBuyPL.add(allSellPL).compareTo(BigDecimal.ZERO) < 0) {
                         // 全仓保证金率 （多单收益 + 空单收益 + 多单保证金 + 空单保证金 + 账户可用USDT余额 + 账户冻结USDT金额 - 平多手续费 - 平空手续费）/ （多单最低保证金 + 空单最低保证金）
-                        BigDecimal curRate = buyPL.add(sellPL).add(wallet.getUsdtBuyPrincipalAmount()).add(wallet.getUsdtSellPrincipalAmount()).add(wallet.getUsdtBalance()).add(wallet.getUsdtFrozenBalance()).subtract(buyCloseFee).subtract(sellCloseFee).divide(buyPositionValue.add(sellPositionValue), 8, BigDecimal.ROUND_DOWN);
+                        BigDecimal curRate = allBuyPL.add(allSellPL).add(allBuyPrincipalAmount).add(allSellPrincipalAmount).add(wallet.getUsdtBalance()).add(wallet.getUsdtFrozenBalance()).subtract(allBuyCloseFee).subtract(allSellCloseFee).divide(allBuyPositionValue.add(allSellPositionValue), 8, BigDecimal.ROUND_DOWN);
                         //logger.info("爆仓检查 - 保证金率："+curRate + "，维持保证金率：" + contractCoin.getMaintenanceMarginRate());
                         if(curRate.compareTo(contractCoin.getMaintenanceMarginRate()) <= 0) {
                             logger.info("爆仓检查 - 保证金率："+curRate);
                             // 爆 多单 和 空单
-                            blastAll(wallet, newPrice);
+                            for (MemberContractWallet item:items) {
+                                BigDecimal nowPrice = matchFactory.getContractCoinMatch(item.getContractCoin().getSymbol()).getNowPrice();
+                                blastAll(item, nowPrice);
+                            }
                             // 更新钱包
                             MemberContractWallet queryWallet = memberContractWalletService.findOne(wallet.getId());
                             memberContractWalletList.set(memberContractWalletList.indexOf(wallet), queryWallet);
@@ -1066,12 +1091,12 @@ public class ContractCoinMatch {
      * 定点爆仓
      * @param newPrice
      */
-    public void refreshBlastPrice(BigDecimal newPrice) {
+    public void refreshBlastPrice(BigDecimal newPrice, ContractCoinMatchFactory matchFactory) {
         logger.info("========>>>>>>定点爆仓，爆仓执行价：{}", newPrice);
         // 尚未启动
         if(!this.isStarted) return;
 
-        this.process(newPrice);
+        this.process(newPrice, matchFactory);
     }
 
     /**

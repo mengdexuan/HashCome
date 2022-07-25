@@ -317,7 +317,7 @@ public class WebSocketHuobi extends WebSocketClient {
                             this.matchFactory.getContractCoinMatch(symbol).refreshThumb(thumb);
 
                             // 委托触发 or 爆仓
-                            this.matchFactory.getContractCoinMatch(symbol).refreshPrice(close);
+                            this.matchFactory.getContractCoinMatch(symbol).refreshPrice(close, this.matchFactory);
                             //logger.info("[WebSocketHuobi] 价格更新：{}", close);
                         }
                     }else if(type.equals("trade")) { // 成交明细
