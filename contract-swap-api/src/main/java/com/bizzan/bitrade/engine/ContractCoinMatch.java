@@ -191,12 +191,12 @@ public class ContractCoinMatch {
         // （当前持仓张数 * 持仓均价 + 委托张数 * 成交价格） / （当前持仓张数 + 委托张数）
         BigDecimal avaPrice = BigDecimal.ZERO;
         if (order.getDirection() == ContractOrderDirection.BUY) {
-            logger.info("计算开仓均价（开多）：当前持仓张数（{}）,当前持仓均价（{}）, 委托张数（{}），成交价格价格（{}）", memberContractWallet.getUsdtBuyPosition(), memberContractWallet.getUsdtBuyPrice(), order.getVolume(), openPrice);
+            logger.info("计算开仓均价（开多）：当前持仓张数（{}）,当前持仓均价（{}）, 委托张数（{}），成交价格价格（{}） 代币数量({})", memberContractWallet.getUsdtBuyPosition(), memberContractWallet.getUsdtBuyPrice(), order.getVolume(), openPrice, order.getQuantity());
             avaPrice = memberContractWallet.getUsdtBuyPosition().multiply(memberContractWallet.getUsdtBuyPrice()).add(order.getVolume().multiply(openPrice)).divide(memberContractWallet.getUsdtBuyPosition().add(order.getVolume()), 8, BigDecimal.ROUND_DOWN);
             // 更新持仓均价和持仓数量（多仓）
             memberContractWalletService.updateUsdtBuyPriceAndPosition(memberContractWallet.getId(), avaPrice, order.getVolume(), order.getQuantity());
         } else {
-            logger.info("计算开仓均价（开多）：当前持仓张数（{}）,当前持仓均价（{}）, 委托张数（{}），成交价格价格（{}）", memberContractWallet.getUsdtSellPosition(), memberContractWallet.getUsdtSellPrice(), order.getVolume(), openPrice);
+            logger.info("计算开仓均价（开多）：当前持仓张数（{}）,当前持仓均价（{}）, 委托张数（{}），成交价格价格（{}） 代币数量({})", memberContractWallet.getUsdtSellPosition(), memberContractWallet.getUsdtSellPrice(), order.getVolume(), openPrice, order.getQuantity());
             avaPrice = memberContractWallet.getUsdtSellPosition().multiply(memberContractWallet.getUsdtSellPrice()).add(order.getVolume().multiply(openPrice)).divide(memberContractWallet.getUsdtSellPosition().add(order.getVolume()), 8, BigDecimal.ROUND_DOWN);
             // 更新持仓均价和持仓数量（空仓）
             memberContractWalletService.updateUsdtSellPriceAndPosition(memberContractWallet.getId(), avaPrice, order.getVolume(), order.getQuantity());
