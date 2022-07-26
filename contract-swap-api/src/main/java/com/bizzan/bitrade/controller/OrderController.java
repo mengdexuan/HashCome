@@ -901,58 +901,54 @@ public class OrderController {
         if (member == null) {
             return MessageResult.error(500, "用户不存在");
         }
-//        ContractCoin coin = contractCoinService.findOne(contractCoinId);
-//        if (coin == null) {
-//            return MessageResult.error(500, "币种不存在");
-//        }
-//        MemberContractWallet wallet = memberContractWalletService.findByMemberIdAndContractCoin(authMember.getId(), coin);
-//        if (wallet == null) {
-//            return MessageResult.error(500, "不存在该币种合约账户");
-//        }
+        ContractCoin coin = contractCoinService.findOne(contractCoinId);
+        if (coin == null) {
+            return MessageResult.error(500, "币种不存在");
+        }
+        MemberContractWallet wallet = memberContractWalletService.findByMemberIdAndContractCoin(authMember.getId(), coin);
+        if (wallet == null) {
+            return MessageResult.error(500, "不存在该币种合约账户");
+        }
 
-        List<MemberContractWallet> wallets = memberContractWalletService.findAllByMemberId(authMember.getId());
-        for(MemberContractWallet wallet: wallets) {
-            ContractCoin coin = wallet.getContractCoin();
-            // 计算账户权益
-            BigDecimal currentPrice = contractCoinMatchFactory.getContractCoinMatch(coin.getSymbol()).getNowPrice();
+        // 计算账户权益
+        BigDecimal currentPrice = contractCoinMatchFactory.getContractCoinMatch(coin.getSymbol()).getNowPrice();
 
-            // 计算金本位权益（多仓 + 空仓）
-            BigDecimal usdtTotalProfitAndLoss = BigDecimal.ZERO;
-            // 多仓计算方法：（当前价格 / 开仓均价 - 1）* （可用仓位 + 冻结仓位） * 合约面值
-            if (wallet.getUsdtBuyPrice().compareTo(BigDecimal.ZERO) > 0) {
-                usdtTotalProfitAndLoss = usdtTotalProfitAndLoss.add(currentPrice.divide(wallet.getUsdtBuyPrice(), 4, BigDecimal.ROUND_DOWN).subtract(BigDecimal.ONE).multiply(wallet.getUsdtBuyPosition().add(wallet.getUsdtFrozenBuyPosition())).multiply(wallet.getUsdtShareNumber()));
-            }
-            // 空仓计算方法：（1 - 当前价格 / 开仓均价）* （可用仓位 + 冻结仓位） * 合约面值
-            if (wallet.getUsdtSellPrice().compareTo(BigDecimal.ZERO) > 0) {
-                usdtTotalProfitAndLoss = usdtTotalProfitAndLoss.add(BigDecimal.ONE.subtract(currentPrice.divide(wallet.getUsdtSellPrice(), 4, BigDecimal.ROUND_DOWN)).multiply(wallet.getUsdtSellPosition().add(wallet.getUsdtFrozenSellPosition())).multiply(wallet.getUsdtShareNumber()));
-            }
+        // 计算金本位权益（多仓 + 空仓）
+        BigDecimal usdtTotalProfitAndLoss = BigDecimal.ZERO;
+        // 多仓计算方法：（当前价格 / 开仓均价 - 1）* （可用仓位 + 冻结仓位） * 合约面值
+        if (wallet.getUsdtBuyPrice().compareTo(BigDecimal.ZERO) > 0) {
+            usdtTotalProfitAndLoss = usdtTotalProfitAndLoss.add(currentPrice.divide(wallet.getUsdtBuyPrice(), 4, BigDecimal.ROUND_DOWN).subtract(BigDecimal.ONE).multiply(wallet.getUsdtBuyPosition().add(wallet.getUsdtFrozenBuyPosition())).multiply(wallet.getUsdtShareNumber()));
+        }
+        // 空仓计算方法：（1 - 当前价格 / 开仓均价）* （可用仓位 + 冻结仓位） * 合约面值
+        if (wallet.getUsdtSellPrice().compareTo(BigDecimal.ZERO) > 0) {
+            usdtTotalProfitAndLoss = usdtTotalProfitAndLoss.add(BigDecimal.ONE.subtract(currentPrice.divide(wallet.getUsdtSellPrice(), 4, BigDecimal.ROUND_DOWN)).multiply(wallet.getUsdtSellPosition().add(wallet.getUsdtFrozenSellPosition())).multiply(wallet.getUsdtShareNumber()));
+        }
 
-            wallet.setUsdtTotalProfitAndLoss(usdtTotalProfitAndLoss);
+        wallet.setUsdtTotalProfitAndLoss(usdtTotalProfitAndLoss);
 
-            String serviceName = "ADMIN";
-            String url = "http://" + serviceName + "/admin/swap-coin/feePercent";
 
-            /**
-             * 查询 admin 服务，获取服务费率
-             */
-            ParameterizedTypeReference<List<Map<String,BigDecimal>>> typeRef = new ParameterizedTypeReference<List<Map<String,BigDecimal>>>() {};
-            ResponseEntity<List<Map<String,BigDecimal>>> responseEntity = restTemplate.exchange(url, HttpMethod.GET, new HttpEntity<>(null), typeRef);
-            List<Map<String, BigDecimal>> tempList = responseEntity.getBody();
+        String serviceName = "ADMIN";
+        String url = "http://" + serviceName + "/admin/swap-coin/feePercent";
 
-            setMoreBlast(wallet);
-            setLessBlast(wallet);
+        /**
+         * 查询 admin 服务，获取服务费率
+         */
+        ParameterizedTypeReference<List<Map<String,BigDecimal>>> typeRef = new ParameterizedTypeReference<List<Map<String,BigDecimal>>>() {};
+        ResponseEntity<List<Map<String,BigDecimal>>> responseEntity = restTemplate.exchange(url, HttpMethod.GET, new HttpEntity<>(null), typeRef);
+        List<Map<String, BigDecimal>> tempList = responseEntity.getBody();
 
-            for (Map<String, BigDecimal> item:tempList){
-                if (item.containsKey(wallet.getContractCoin().getSymbol())){
-                    BigDecimal feePercent = item.get(wallet.getContractCoin().getSymbol());
-                    wallet.setFeePercent(feePercent);
-                }
+        setMoreBlast(wallet);
+        setLessBlast(wallet);
+
+        for (Map<String, BigDecimal> item:tempList){
+            if (item.containsKey(wallet.getContractCoin().getSymbol())){
+                BigDecimal feePercent = item.get(wallet.getContractCoin().getSymbol());
+                wallet.setFeePercent(feePercent);
             }
         }
 
-
         MessageResult result = MessageResult.success("success");
-        result.setData(wallets);
+        result.setData(wallet);
         return result;
     }
 
