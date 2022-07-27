@@ -497,6 +497,7 @@ public class OrderController {
         orderEntrust.setDirection(direction); // 平仓方向：平空/平多
         orderEntrust.setContractOrderEntrustId(GeneratorUtil.getOrderId("CE"));
         orderEntrust.setVolume(volume); // 平仓张数
+        orderEntrust.setQuantity(quantity);
         orderEntrust.setTradedVolume(BigDecimal.ZERO); // 已交易数量
         orderEntrust.setTradedPrice(BigDecimal.ZERO); // 成交价格
         orderEntrust.setPrincipalUnit("USDT"); // 保证金单位
