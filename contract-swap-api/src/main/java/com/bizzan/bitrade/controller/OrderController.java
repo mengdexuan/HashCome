@@ -99,7 +99,7 @@ public class OrderController {
                                    @RequestParam(value = "leverage") BigDecimal leverage,// 委托价格
                                    @RequestParam(value = "usdtNum", required = false) BigDecimal usdtNum,// 开仓usdt数量
                                    @RequestParam(value = "volume", required = false) BigDecimal volume,// 委托数量（张）
-                                   @RequestParam(value = "quantity", required = false) BigDecimal quantity// 币数量
+                                   @RequestParam(value = "quantity", required = true) BigDecimal quantity// 币数量
     ) {
 
         // 输入合法性检查
@@ -406,7 +406,7 @@ public class OrderController {
                                     @RequestParam(value = "triggerPrice", required = false) BigDecimal triggerPrice,// 触发价格
                                     @RequestParam(value = "entrustPrice") BigDecimal entrustPrice,// 委托价格(计划委托时如为0：市价成交)
                                     @RequestParam(value = "volume") BigDecimal volume,// 委托数量（张）
-                                    @RequestParam(value = "quantity", required = false) BigDecimal quantity// 币数量
+                                    @RequestParam(value = "quantity", required = true) BigDecimal quantity// 币数量
     ) {
         // 输入合法性检查
         if (contractCoinId == null || direction == null || type == null || (volume == null && quantity == null)) {
