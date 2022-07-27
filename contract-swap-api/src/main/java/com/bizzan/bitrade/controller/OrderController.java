@@ -128,6 +128,8 @@ public class OrderController {
             if (type == ContractOrderType.LIMIT_PRICE || type == ContractOrderType.SPOT_LIMIT) {
                 if (entrustPrice != null) {
                     usdtNum = quantity.multiply(entrustPrice);
+                } else if (triggerPrice != null) {
+                    usdtNum = quantity.multiply(triggerPrice);
                 }
             } else {
                 BigDecimal currentPrice = contractCoinMatchFactory.getContractCoinMatch(contractCoin.getSymbol()).getNowPrice();
