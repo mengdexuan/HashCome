@@ -1018,6 +1018,12 @@ public class OrderController {
         BigDecimal closeFee = wallet.getContractCoin().getCloseFee();
         BigDecimal usdtFrozenBalance = wallet.getUsdtFrozenBalance();
 
+        if (usdtBuyPosition.add(usdtFrozenBuyPosition).add(usdtSellPosition).add(usdtFrozenSellPosition).compareTo(BigDecimal.valueOf(0))==0) {
+            wallet.setMoreBlastPrice(BigDecimal.valueOf(0));
+            wallet.setLessBlastPrice(BigDecimal.valueOf(0));
+            return BigDecimal.valueOf(0);
+        }
+
 
 //        (B2+B3)/C2
         BigDecimal temp1 = (usdtBuyPosition.add(usdtFrozenBuyPosition)).divide(usdtBuyLeverage,4, BigDecimal.ROUND_DOWN);
