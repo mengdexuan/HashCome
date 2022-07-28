@@ -1085,6 +1085,14 @@ public class OrderController {
         BigDecimal temp15 = usdtBuyPrice.multiply(usdtSellPrice).multiply(temp14);
         BigDecimal temp16 = temp12.subtract(temp13);
 
+        System.out.println("***********************");
+        System.out.println(usdtSellPrice);
+        System.out.println(usdtBuyPrice);
+
+        System.out.println(temp12);
+        System.out.println(temp13);
+        System.out.println("***********************");
+
         BigDecimal result = temp15.divide(temp16,8, BigDecimal.ROUND_DOWN);
 
         return result;
