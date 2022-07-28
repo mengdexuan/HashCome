@@ -1026,31 +1026,31 @@ public class OrderController {
 
 
 //        (B2+B3)/C2
-        BigDecimal temp1 = (usdtBuyPosition.add(usdtFrozenBuyPosition)).divide(usdtBuyLeverage,4, BigDecimal.ROUND_DOWN);
+        BigDecimal temp1 = (usdtBuyPosition.add(usdtFrozenBuyPosition)).divide(usdtBuyLeverage,8, BigDecimal.ROUND_DOWN);
 
 //        (S2+S3)/C3
-        BigDecimal temp2 = (usdtSellPosition.add(usdtFrozenSellPosition)).divide(usdtSellLeverage,4, BigDecimal.ROUND_DOWN);
+        BigDecimal temp2 = (usdtSellPosition.add(usdtFrozenSellPosition)).divide(usdtSellLeverage,8, BigDecimal.ROUND_DOWN);
 
 //        C5*((B2+B3)/C2 + (S2+S3)/C3)
         BigDecimal temp3 = (temp1.add(temp2)).multiply(maintenanceMarginRate);
 
 //        D1/C1
-        BigDecimal temp4 = usdtBuyPrincipalAmount.divide(usdtShareNumber,4, BigDecimal.ROUND_DOWN);
+        BigDecimal temp4 = usdtBuyPrincipalAmount.divide(usdtShareNumber,8, BigDecimal.ROUND_DOWN);
 
 //        (B2+B3)*C4
         BigDecimal temp5 = (usdtBuyPosition.add(usdtFrozenBuyPosition)).multiply(closeFee);
 
 //        D2/C1
-        BigDecimal temp6 = usdtSellPrincipalAmount.divide(usdtShareNumber,4, BigDecimal.ROUND_DOWN);
+        BigDecimal temp6 = usdtSellPrincipalAmount.divide(usdtShareNumber,8, BigDecimal.ROUND_DOWN);
 
 //        (S2+S3)*C4
         BigDecimal temp7 = (usdtSellPosition.add(usdtFrozenSellPosition)).multiply(closeFee);
 
 //        D3/C1
-        BigDecimal temp8 = usdtSellLeverage.divide(usdtShareNumber,4, BigDecimal.ROUND_DOWN);
+        BigDecimal temp8 = usdtSellLeverage.divide(usdtShareNumber,8, BigDecimal.ROUND_DOWN);
 
 //        D4/C1
-        BigDecimal temp9 = usdtFrozenBalance.divide(usdtShareNumber,4, BigDecimal.ROUND_DOWN);
+        BigDecimal temp9 = usdtFrozenBalance.divide(usdtShareNumber,8, BigDecimal.ROUND_DOWN);
 
 //        (B2+B3)
         BigDecimal temp10 = usdtBuyPosition.add(usdtFrozenBuyPosition);
@@ -1085,7 +1085,7 @@ public class OrderController {
         BigDecimal temp15 = usdtBuyPrice.multiply(usdtSellPrice).multiply(temp14);
         BigDecimal temp16 = temp12.subtract(temp13);
 
-        BigDecimal result = temp15.divide(temp16,4, BigDecimal.ROUND_DOWN);
+        BigDecimal result = temp15.divide(temp16,8, BigDecimal.ROUND_DOWN);
 
         return result;
     }
