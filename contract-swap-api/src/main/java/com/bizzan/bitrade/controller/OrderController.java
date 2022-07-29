@@ -1093,6 +1093,10 @@ public class OrderController {
         System.out.println(temp13);
         System.out.println("***********************");
 
+        if (temp16.compareTo(BigDecimal.valueOf(0)) == 0) {
+            return BigDecimal.valueOf(0);
+        }
+
         BigDecimal result = temp15.divide(temp16,8, BigDecimal.ROUND_DOWN);
 
         return result;
