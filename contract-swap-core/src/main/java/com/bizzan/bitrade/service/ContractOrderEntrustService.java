@@ -155,7 +155,9 @@ public class ContractOrderEntrustService  extends BaseService {
         PageRequest pageRequest = new PageRequest(pageNo - 1, pageSize, orders);
 
         specification.add(Restrictions.eq("memberId", memberId, false));
-        specification.add(Restrictions.eq("contractId", contractCoinId, false));
+        if (contractCoinId != null) {
+            specification.add(Restrictions.eq("contractId", contractCoinId, false));
+        }
         specification.add(Restrictions.eq("status", ContractOrderEntrustStatus.ENTRUST_ING, false));
 
         return contractOrderEntrustRepository.findAll(specification, pageRequest);
@@ -174,7 +176,9 @@ public class ContractOrderEntrustService  extends BaseService {
         PageRequest pageRequest = new PageRequest(pageNo - 1, pageSize, orders);
 
         specification.add(Restrictions.eq("memberId", memberId, false));
-        specification.add(Restrictions.eq("contractId", contractCoinId, false));
+        if (contractCoinId != null) {
+            specification.add(Restrictions.eq("contractId", contractCoinId, false));
+        }
         specification.add(Restrictions.ne("status", ContractOrderEntrustStatus.ENTRUST_ING, false));
 
         return contractOrderEntrustRepository.findAll(specification, pageRequest);
