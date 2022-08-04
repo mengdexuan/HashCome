@@ -926,6 +926,7 @@ public class OrderController {
             ContractCoin coin = wallet.getContractCoin();
             // 计算账户权益
             BigDecimal currentPrice = contractCoinMatchFactory.getContractCoinMatch(coin.getSymbol()).getNowPrice();
+            wallet.setCurrentPrice(currentPrice);
 
             // 计算金本位权益（多仓 + 空仓）
             BigDecimal usdtTotalProfitAndLoss = BigDecimal.ZERO;
