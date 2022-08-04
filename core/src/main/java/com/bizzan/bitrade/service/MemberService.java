@@ -2,22 +2,31 @@ package com.bizzan.bitrade.service;
 
 import com.bizzan.bitrade.constant.CertifiedBusinessStatus;
 import com.bizzan.bitrade.constant.CommonStatus;
+import com.bizzan.bitrade.constant.MemberLevelEnum;
 import com.bizzan.bitrade.dao.MemberDao;
 import com.bizzan.bitrade.dao.MemberSignRecordDao;
 import com.bizzan.bitrade.dao.MemberTransactionDao;
 import com.bizzan.bitrade.entity.*;
+import com.bizzan.bitrade.event.MemberEvent;
 import com.bizzan.bitrade.exception.AuthenticationException;
 import com.bizzan.bitrade.pagination.Criteria;
 import com.bizzan.bitrade.pagination.PageResult;
 import com.bizzan.bitrade.pagination.Restrictions;
 import com.bizzan.bitrade.service.Base.BaseService;
 import com.bizzan.bitrade.util.BigDecimalUtils;
+import com.bizzan.bitrade.util.GeneratorUtil;
+import com.bizzan.bitrade.util.IdWorkByTwitter;
 import com.bizzan.bitrade.util.Md5;
 import com.querydsl.core.types.Predicate;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQuery;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
+import org.apache.shiro.util.ByteSource;
+import org.hibernate.validator.constraints.Email;
+import org.hibernate.validator.constraints.Length;
+import org.hibernate.validator.constraints.NotBlank;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -27,9 +36,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import static com.bizzan.bitrade.constant.TransactionType.ACTIVITY_AWARD;
+import static com.bizzan.bitrade.util.MessageResult.error;
+import static com.bizzan.bitrade.util.MessageResult.success;
 
 import java.util.List;
 
+@Slf4j
 @Service
 public class MemberService extends BaseService {
 
@@ -41,6 +53,84 @@ public class MemberService extends BaseService {
 
     @Autowired
     private MemberTransactionDao transactionDao;
+
+    @Autowired
+    private IdWorkByTwitter idWorkByTwitter;
+
+    @Autowired
+    private MemberEvent memberEvent;
+
+    /**
+     * 邮箱自动注册
+     * @param email
+     * @param password
+     * @param countryStr eg: 中国
+     */
+    void autoRegisterByEmail(String email,String password,String countryStr){
+
+        //不可重复随机数
+        String loginNo = String.valueOf(idWorkByTwitter.nextId());
+        //盐
+        String credentialsSalt = ByteSource.Util.bytes(loginNo).toHex();
+        //生成密码
+        String pwd = null;
+        try {
+            pwd = Md5.md5Digest(password + credentialsSalt).toLowerCase();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        Member member = new Member();
+
+        member.setMemberLevel(MemberLevelEnum.GENERAL);
+        Location location = new Location();
+        location.setCountry(countryStr);
+        member.setLocation(location);
+        Country country = new Country();
+        country.setZhName(countryStr);
+        member.setCountry(country);
+        member.setUsername(email);
+        member.setPassword(pwd);
+        member.setEmail(email);
+        member.setSalt(credentialsSalt);
+        member.setAvatar("https://bizzan.oss-cn-hangzhou.aliyuncs.com/defaultavatar.png"); // 默认用户头像
+        save(member);
+    }
+
+
+    /**
+     * 手机自动注册
+     * @param phone
+     * @param password
+     * @param countryStr eg: 中国
+     */
+    void autoRegisterByPhone(String phone,String password,String countryStr){
+        //不可重复随机数
+        String loginNo = String.valueOf(idWorkByTwitter.nextId());
+        //盐
+        String credentialsSalt = ByteSource.Util.bytes(loginNo).toHex();
+        //生成密码
+        try {
+            String pwd = Md5.md5Digest(password + credentialsSalt).toLowerCase();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        Member member = new Member();
+        member.setSuperPartner("0");// 普通用户：0 代理商：1
+        member.setMemberLevel(MemberLevelEnum.GENERAL);
+        Location location = new Location();
+        location.setCountry(countryStr);
+        Country country = new Country();
+        country.setZhName(countryStr);
+        member.setCountry(country);
+        member.setLocation(location);
+        member.setUsername(phone);
+        member.setPassword(password);
+        member.setMobilePhone(phone);
+        member.setSalt(credentialsSalt);
+        member.setAvatar("https://bizzan.oss-cn-hangzhou.aliyuncs.com/defaultavatar.png"); // 默认用户头像
+        save(member);
+    }
+
 
     /**
      * 条件查询对象 pageNo pageSize 同时传时分页
