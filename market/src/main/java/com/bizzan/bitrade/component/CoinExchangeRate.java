@@ -38,11 +38,11 @@ public class CoinExchangeRate {
     @Getter
     @Setter
     private BigDecimal usdCnyRate = new BigDecimal("6.90");
-    
+
     @Getter
     @Setter
     private BigDecimal usdtCnyRate = new BigDecimal("7.00");
-    
+
     @Getter
     @Setter
     private BigDecimal usdJpyRate = new BigDecimal("110.02");
@@ -169,7 +169,7 @@ public class CoinExchangeRate {
                 log.info("Support exchange coin = {}/BTC", btcSymbol);
                 CoinProcessor processor = coinProcessorFactory.getProcessor(btcSymbol);
                 if(processor == null) {
-                	return BigDecimal.ZERO; 
+                	return BigDecimal.ZERO;
                 }
                 CoinThumb thumb = processor.getThumb();
                 if(thumb == null) {
@@ -181,7 +181,7 @@ public class CoinExchangeRate {
                 log.info("Support exchange coin = {}/ETH", ethSymbol);
                 CoinProcessor processor = coinProcessorFactory.getProcessor(ethSymbol);
                 if(processor == null) {
-                	return BigDecimal.ZERO; 
+                	return BigDecimal.ZERO;
                 }
                 CoinThumb thumb = processor.getThumb();
                 if(thumb == null) {
@@ -251,23 +251,23 @@ public class CoinExchangeRate {
      *
      * @throws UnirestException
      */
-    
+
     @Scheduled(cron = "0 */5 * * * *")
     public void syncUsdtCnyPrice() throws UnirestException {
-    	// 抹茶OTC接口
-    	String url = "https://otc.mxc.com/api/coin/USDT/price";
-        //如有报错 请自行官网申请获取汇率 或者默认写死
-        HttpResponse<JsonNode> resp = Unirest.get(url)
-                .asJson();
-        if(resp.getStatus() == 200) { //正确返回
-	        JSONObject ret = JSON.parseObject(resp.getBody().toString());
-	        if(ret.getIntValue("code") == 0) {
-	        	JSONObject result = ret.getJSONObject("result");
-	        	setUsdtCnyRate(new BigDecimal(result.getDouble("buy")).setScale(2, RoundingMode.HALF_UP));
-	        	return;
-	        }
-        }
-        
+//    	// 抹茶OTC接口
+//    	String url = "https://otc.mxc.com/api/coin/USDT/price";
+//        //如有报错 请自行官网申请获取汇率 或者默认写死
+//        HttpResponse<JsonNode> resp = Unirest.get(url)
+//                .asJson();
+//        if(resp.getStatus() == 200) { //正确返回
+//	        JSONObject ret = JSON.parseObject(resp.getBody().toString());
+//	        if(ret.getIntValue("code") == 0) {
+//	        	JSONObject result = ret.getJSONObject("result");
+//	        	setUsdtCnyRate(new BigDecimal(result.getDouble("buy")).setScale(2, RoundingMode.HALF_UP));
+//	        	return;
+//	        }
+//        }
+
         // Huobi Otc接口（如抹茶接口无效则走此路径）
         String url2 = "https://otc-api-hk.eiijo.cn/v1/data/trade-market?coinId=2&currency=1&tradeType=sell&currPage=1&payMethod=0&country=&blockType=general&online=1&range=0&amount=";
         HttpResponse<JsonNode> resp2 = Unirest.get(url2)
@@ -283,7 +283,7 @@ public class CoinExchangeRate {
 	        	}
 	        }
         }
-        
+
         // Okex Otc接口
         String url3 = "https://otc-api-hk.eiijo.cn/v1/data/trade-market?coinId=2&currency=1&tradeType=sell&currPage=1&payMethod=0&country=37&blockType=general&online=1&range=0&amount=";
         HttpResponse<JsonNode> resp3 = Unirest.get(url2)
@@ -300,13 +300,13 @@ public class CoinExchangeRate {
 	        }
         }
     }
-    
+
     /**
      * 每30分钟同步一次价格
      *
      * @throws UnirestException
      */
-    
+
     @Scheduled(cron = "0 */30 * * * *")
     public void syncPrice() throws UnirestException {
         String url = "http://op.juhe.cn/onebox/exchange/query?key=4cc2de9a6f5d95cb412d8ee34950a1db";
