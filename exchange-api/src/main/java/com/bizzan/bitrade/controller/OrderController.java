@@ -12,9 +12,12 @@ import com.bizzan.bitrade.util.MessageResult;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.data.domain.Page;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.web.bind.annotation.*;
@@ -68,6 +71,7 @@ public class OrderController {
      * @param symbol
      * @param price
      * @param amount
+     * @param quoteAmount
      * @param type
      *          usedisCount 暂时不用
      * @return
@@ -75,7 +79,7 @@ public class OrderController {
     @RequestMapping("add")
     public MessageResult addOrder(@SessionAttribute(SESSION_MEMBER) AuthMember authMember,
                                     ExchangeOrderDirection direction,String symbol, BigDecimal price,
-                                    BigDecimal amount, ExchangeOrderType type) {
+                                    BigDecimal amount, BigDecimal quoteAmount, ExchangeOrderType type) {
         //int expireTime = SysConstant.USER_ADD_EXCHANGE_ORDER_TIME_LIMIT_EXPIRE_TIME;
         //ValueOperations valueOperations =  redisTemplate.opsForValue();
         if(direction == null || type == null){
@@ -97,7 +101,7 @@ public class OrderController {
             return MessageResult.error(500, msService.getMessage("EXORBITANT_PRICES"));
         }
         //判断数量小于零
-        if (amount.compareTo(BigDecimal.ZERO) <= 0) {
+        if (amount.compareTo(BigDecimal.ZERO) <= 0 && quoteAmount.compareTo(BigDecimal.ZERO) <= 0) {
             return MessageResult.error(500, msService.getMessage("NUMBER_OF_ILLEGAL"));
         }
         //根据交易对名称（symbol）获取交易对儿信息
@@ -136,12 +140,33 @@ public class OrderController {
         price = price.setScale(exchangeCoin.getBaseCoinScale(), BigDecimal.ROUND_DOWN);
         //委托数量和精度控制
         if (direction == ExchangeOrderDirection.BUY && type == ExchangeOrderType.MARKET_PRICE) {
+            if (quoteAmount.compareTo(BigDecimal.ZERO) > 0) {
+                amount = quoteAmount;
+            } else {
+                // 获取最新价格
+                String serviceName = "BITRADE-MARKET";
+                String marketUrl = "http://" + serviceName + "/swap/symbol-thumb";
+                ParameterizedTypeReference<List<CoinThumb>> typeRef = new ParameterizedTypeReference<List<CoinThumb>>() {};
+                ResponseEntity<List<CoinThumb>> responseEntity = restTemplate.exchange(marketUrl, HttpMethod.POST, new HttpEntity<>(null), typeRef);
+                List<CoinThumb> thumbList =responseEntity.getBody();
+                for(int i = 0; i < thumbList.size(); i++) {
+                    CoinThumb thumb = thumbList.get(i);
+                    if(symbol.equals(thumb.getSymbol())) {
+                        amount = amount.multiply(thumb.getClose());
+                    }
+                }
+            }
             amount = amount.setScale(exchangeCoin.getBaseCoinScale(), BigDecimal.ROUND_DOWN);
             //最小成交额控制
             if (amount.compareTo(exchangeCoin.getMinTurnover()) < 0) {
                 return MessageResult.error(500, "成交额至少为" + exchangeCoin.getMinTurnover());
             }
         } else {
+            if (quoteAmount.compareTo(BigDecimal.ZERO) > 0 && price.compareTo(BigDecimal.ZERO) > 0) {
+                if (amount.compareTo(BigDecimal.ZERO) <=0) {
+                    amount = quoteAmount.divide(price, exchangeCoin.getCoinScale(), BigDecimal.ROUND_DOWN);
+                }
+            }
             amount = amount.setScale(exchangeCoin.getCoinScale(), BigDecimal.ROUND_DOWN);
             //成交量范围控制
             if(exchangeCoin.getMaxVolume()!=null&&exchangeCoin.getMaxVolume().compareTo(BigDecimal.ZERO)!=0
@@ -189,7 +214,7 @@ public class OrderController {
         if (exchangeCoin.getMaxTradingOrder() > 0 && orderService.findCurrentTradingCount(member.getId(), symbol, direction) >= exchangeCoin.getMaxTradingOrder()) {
             return MessageResult.error(500, "超过最大挂单数量 " + exchangeCoin.getMaxTradingOrder());
         }
-        
+
         // 抢购模式活动订单限制（用户无法在活动前下买单）
         long currentTime = Calendar.getInstance().getTimeInMillis(); // 当前时间戳
         // 抢购模式下，无法在活动开始前下买单，仅限于管理员下卖单
@@ -474,7 +499,7 @@ public class OrderController {
         // 分摊模式活动订单限制(开始前任何人无法下单)
         if(exchangeCoin.getPublishType() == ExchangeCoinPublishType.FENTAN) {
         	try {
-        		
+
 				if(currentTime < dateTimeFormat.parse(exchangeCoin.getStartTime()).getTime()) {
 					// 活动开始前无法下单
 					return MessageResult.error(500, "活动尚未开始");
@@ -541,7 +566,7 @@ public class OrderController {
         result.setData(order.getOrderId());
         return result;
     }
-    
+
     /**
      * 历史委托
      */
@@ -664,7 +689,7 @@ public class OrderController {
         /*
         page.getContent().forEach(exchangeOrder -> {
             //获取交易成交详情(机器人无需获取详情）
-        	
+
             BigDecimal tradedAmount = BigDecimal.ZERO;
             List<ExchangeOrderDetail> details = exchangeOrderDetailService.findAllByOrderId(exchangeOrder.getOrderId());
             exchangeOrder.setDetail(details);
@@ -672,12 +697,12 @@ public class OrderController {
                 tradedAmount = tradedAmount.add(trade.getAmount());
             }
             exchangeOrder.setTradedAmount(tradedAmount);
-            
+
         });
         */
         return page;
     }
-    
+
     /**
      * 行情机器人专用：交易取消委托
      * @param uid
@@ -721,7 +746,7 @@ public class OrderController {
         }
         return MessageResult.success("success");
     }
-    
+
     /**
      * 查询委托成交明细
      *
