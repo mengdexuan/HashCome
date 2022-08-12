@@ -145,6 +145,20 @@ public class OrderController {
             volume = usdtNum.divide(contractCoin.getShareNumber(), 8, BigDecimal.ROUND_DOWN);
         }
 
+        if (quantity == null) {
+            BigDecimal t = volume.multiply(contractCoin.getShareNumber());
+            if (type == ContractOrderType.LIMIT_PRICE || type == ContractOrderType.SPOT_LIMIT) {
+                if (entrustPrice != null) {
+                    quantity = t.divide(entrustPrice, 4, BigDecimal.ROUND_DOWN);
+                } else if (triggerPrice != null) {
+                    quantity = t.divide(triggerPrice, 4, BigDecimal.ROUND_DOWN);
+                }
+            } else {
+                BigDecimal currentPrice = contractCoinMatchFactory.getContractCoinMatch(contractCoin.getSymbol()).getNowPrice();
+                quantity = t.divide(currentPrice, 4, BigDecimal.ROUND_DOWN);
+            }
+        }
+
         // 检查用户钱包是否存在
         MemberContractWallet memberContractWallet = memberContractWalletService.findByMemberIdAndContractCoin(authMember.getId(), contractCoin);
         if (memberContractWallet == null) {
