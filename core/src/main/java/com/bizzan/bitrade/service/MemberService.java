@@ -13,21 +13,17 @@ import com.bizzan.bitrade.pagination.Criteria;
 import com.bizzan.bitrade.pagination.PageResult;
 import com.bizzan.bitrade.pagination.Restrictions;
 import com.bizzan.bitrade.service.Base.BaseService;
-import com.bizzan.bitrade.util.BigDecimalUtils;
-import com.bizzan.bitrade.util.GeneratorUtil;
-import com.bizzan.bitrade.util.IdWorkByTwitter;
-import com.bizzan.bitrade.util.Md5;
+import com.bizzan.bitrade.util.*;
 import com.querydsl.core.types.Predicate;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQuery;
 
 import lombok.extern.slf4j.Slf4j;
+import net.sf.json.JSONObject;
 import org.apache.commons.lang.StringUtils;
 import org.apache.shiro.util.ByteSource;
-import org.hibernate.validator.constraints.Email;
-import org.hibernate.validator.constraints.Length;
-import org.hibernate.validator.constraints.NotBlank;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -36,9 +32,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import static com.bizzan.bitrade.constant.TransactionType.ACTIVITY_AWARD;
-import static com.bizzan.bitrade.util.MessageResult.error;
-import static com.bizzan.bitrade.util.MessageResult.success;
 
+import java.io.IOException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.List;
 
 @Slf4j
@@ -60,13 +57,17 @@ public class MemberService extends BaseService {
     @Autowired
     private MemberEvent memberEvent;
 
+    //third party verify token
+    @Value("${thirdVerify.url:}")
+    private String thirdVerifyUrl;
+
     /**
      * 邮箱自动注册
      * @param email
      * @param password
      * @param countryStr eg: 中国
      */
-    void autoRegisterByEmail(String email,String password,String countryStr){
+    Member autoRegisterByEmail(String email,String password,String countryStr) throws InterruptedException {
 
         //不可重复随机数
         String loginNo = String.valueOf(idWorkByTwitter.nextId());
@@ -80,7 +81,6 @@ public class MemberService extends BaseService {
             e.printStackTrace();
         }
         Member member = new Member();
-
         member.setMemberLevel(MemberLevelEnum.GENERAL);
         Location location = new Location();
         location.setCountry(countryStr);
@@ -93,7 +93,16 @@ public class MemberService extends BaseService {
         member.setEmail(email);
         member.setSalt(credentialsSalt);
         member.setAvatar("https://bizzan.oss-cn-hangzhou.aliyuncs.com/defaultavatar.png"); // 默认用户头像
-        save(member);
+        Member member1 = save(member);
+
+        if (member1 != null) {
+            // Member为@entity注解类，与数据库直接映射，因此，此处setPromotionCode会直接同步到数据库
+            member1.setPromotionCode(GeneratorUtil.getPromotionCode(member1.getId()));
+            save(member1);
+            memberEvent.onRegisterSuccess(member1, "", countryStr);
+        }
+
+        return member1;
     }
 
 
@@ -168,8 +177,46 @@ public class MemberService extends BaseService {
             return null;
         }
         //Member mr = memberDao.findMemberByTokenAndTokenExpireTimeAfter(token,new Date());
-        Member mr = memberDao.findMemberByToken(token);
-        return mr;
+        //Member mr = memberDao.findMemberByToken(token);
+
+        CheckToken checkToken = null;
+        // 验证token，获取用户信息
+        try {
+            String checkResult = HttpClientUtil.post(
+                            JSONObject.fromObject(String.format("{token:%s}", token)),
+                            this.thirdVerifyUrl, "", "");
+            JSONObject jsonObj = JSONObject.fromObject(checkResult);
+            if (jsonObj.isEmpty() || (200 != (int)jsonObj.get("code")))  {
+                log.error("third party token user info is null");
+                return null;
+            }
+
+            checkToken = (CheckToken)JSONObject.toBean(JSONObject.fromObject(jsonObj.get("data")), CheckToken.class);
+        } catch (IOException e) {
+            log.error("can't get third party token user info due to network");
+            return null;
+        }
+
+        //判断用户是否存在, 不存在则注册
+        Member member = memberDao.findMemberByEmail(checkToken.getEmail());
+        if (null == member) {
+            try {
+                member = autoRegisterByEmail(checkToken.getEmail(), checkToken.getEmail(), ip);
+            } catch (InterruptedException e) {
+                log.error("register member fail or register record fail");
+                return null;
+            }
+        }
+
+        SimpleDateFormat sdf =  new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        try {
+            member.setTokenExpireTime(sdf.parse(checkToken.getExpire()));
+        } catch (ParseException e) {
+            log.error("can't set token expire");
+            return null;
+        }
+
+        return member;
     }
 
     public Member login(String username, String password) throws Exception {

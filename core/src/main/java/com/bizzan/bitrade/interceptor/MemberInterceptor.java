@@ -47,9 +47,9 @@ public class MemberInterceptor implements HandlerInterceptor {
             MemberEvent memberEvent = (MemberEvent) factory.getBean("memberEvent");
             Member member = memberService.loginWithToken(token, request.getRemoteAddr(), "");
             if (member != null) {
-                Calendar calendar = Calendar.getInstance();
-                calendar.add(Calendar.HOUR_OF_DAY, 24 * 7);
-                member.setTokenExpireTime(calendar.getTime());
+//                Calendar calendar = Calendar.getInstance();
+//                calendar.add(Calendar.HOUR_OF_DAY, 24 * 7);
+//                member.setTokenExpireTime(calendar.getTime());
                 memberService.save(member);
                 String ip = getRemoteIp(request);
                 memberEvent.onLoginSuccess(member, request.getRemoteAddr(), "token_login");
