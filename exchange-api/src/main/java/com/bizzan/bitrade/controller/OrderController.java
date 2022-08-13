@@ -145,7 +145,7 @@ public class OrderController {
             } else {
                 // 获取最新价格
                 String serviceName = "BITRADE-MARKET";
-                String marketUrl = "http://" + serviceName + "/swap/symbol-thumb";
+                String marketUrl = "http://" + serviceName + "/market/symbol-thumb";
                 ParameterizedTypeReference<List<CoinThumb>> typeRef = new ParameterizedTypeReference<List<CoinThumb>>() {};
                 ResponseEntity<List<CoinThumb>> responseEntity = restTemplate.exchange(marketUrl, HttpMethod.POST, new HttpEntity<>(null), typeRef);
                 List<CoinThumb> thumbList =responseEntity.getBody();
