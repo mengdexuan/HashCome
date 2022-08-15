@@ -376,7 +376,7 @@ public class WebSocketHuobi extends WebSocketClient {
                         }
                     }else if(type.equals("funding_rate")) { // 资金费率
                         String data = jsonObject.getString("data");
-
+                        logger.info("[WebSocketHuobi] 资金费率：" + data);
                         if (null != data && !"".equals(data) && JSONUtils.isJsonArray(data)) {
 
                             JSONArray list = jsonObject.getJSONArray("data");
