@@ -10,6 +10,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
+import com.alibaba.fastjson.JSON;
 import com.bizzan.bitrade.constant.WalletType;
 import com.bizzan.bitrade.entity.*;
 import com.bizzan.bitrade.service.*;
@@ -23,11 +24,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.bind.annotation.SessionAttribute;
+import org.springframework.web.bind.annotation.*;
 
 import com.alibaba.fastjson.JSONObject;
 import com.bizzan.bitrade.constant.TransactionType;
@@ -49,6 +46,10 @@ public class AssetController {
     private MemberWalletService walletService;
     @Autowired
     private CoinService coinService;
+
+    @Autowired
+    private ContractCoinService contractCoinService;
+
     @Autowired
     private WalletTransRecordService walletTransRecordService;
     @Autowired
@@ -74,6 +75,10 @@ public class AssetController {
 
     @Autowired
     private RestTemplate restTemplate;
+
+    @Autowired
+    private MemberContractWalletService memberContractWalletService;
+
 
     /**
      * 用户钱包信息
@@ -329,6 +334,63 @@ public class AssetController {
         } catch (Exception e) {
             return MessageResult.error("未知异常");
         }
+    }
+
+    /**
+     * 第三方钱包 转移到现货钱包 或者 合约钱包
+     * @param member
+     * @param transferAsset
+     * @return
+     */
+    @PostMapping("wallet/trans")
+    public MessageResult trans(@SessionAttribute(SESSION_MEMBER) AuthMember member, @RequestBody TransferAsset transferAsset) {
+        WalletType assetType = WalletType.SWAP;
+        if (transferAsset.getTransferType().equals("1")) { //现货
+            assetType = WalletType.SPOT;
+            MemberWallet fromWallet = walletService.findByCoinUnitAndMemberId(transferAsset.getCurrency(), member.getId());
+            Assert.notNull(fromWallet, "币种钱包不存在!");
+            if (transferAsset.getType().equals("1")) { //转出
+                walletService.deductBalance(fromWallet, transferAsset.getFromProfit());
+            } else if(transferAsset.getType().equals("2")) { //转入
+                walletService.increaseBalance(fromWallet.getId(), transferAsset.getFromProfit());
+            } else { // 转入 转出 参数异常
+                return MessageResult.error("参数传递错误");
+            }
+        } else if (transferAsset.getTransferType().equals("2")) { //合约
+
+            ContractCoin coin = contractCoinService.findBySymbol(transferAsset.getCurrency());
+            if(coin == null) {
+                return MessageResult.error("合约交易对不存在");
+            }
+            MemberContractWallet fromWallet = memberContractWalletService.findByMemberIdAndContractCoin(member.getId(), coin);
+            Assert.notNull(fromWallet, "币种钱包不存在!");
+            if (transferAsset.getType().equals("1")) { //转出
+                memberContractWalletService.decreaseUsdtBalance(fromWallet.getId(), transferAsset.getFromProfit());
+            } else if(transferAsset.getType().equals("2")) { //转入
+                memberContractWalletService.increaseUsdtBalance(fromWallet.getId(), transferAsset.getFromProfit());
+            } else { // 转入 转出 参数异常
+                return MessageResult.error("参数传递错误");
+            }
+
+            //通知钱包变更
+            JSONObject jsonObj = new JSONObject();
+            jsonObj.put("symbol", fromWallet.getContractCoin().getSymbol());
+            jsonObj.put("walletId", fromWallet.getId());
+            kafkaTemplate.send("member-wallet-change", JSON.toJSONString(jsonObj));
+        } else { //非合约非现货
+            return MessageResult.error("参数传递错误");
+        }
+
+        // 新增划转记录
+        WalletTransRecord record = new WalletTransRecord();
+        record.setAmount(transferAsset.getFromProfit());
+        record.setUnit(transferAsset.getCurrency());
+        record.setSource(WalletType.THIRD); //来自三方
+        record.setTarget(assetType);  //选择 合约 OR 现货
+        record.setMemberId(member.getId());
+        walletTransRecordService.save(record);
+
+        return MessageResult.success("钱包划转OK");
     }
 
     /**
