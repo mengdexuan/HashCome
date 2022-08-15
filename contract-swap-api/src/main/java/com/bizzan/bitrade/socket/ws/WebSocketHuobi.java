@@ -391,6 +391,7 @@ public class WebSocketHuobi extends WebSocketClient {
                                 long settlementTime = obj.getLongValue("settlement_time"); // 结算时间
                                 ContractCoin coin = this.contractCoinService.findBySymbol(symbol);
                                 coin.setFeePercent(fundingRate);
+                                contractCoinService.save(coin);
 
                                 logger.info("[WebSocketHuobi] 资金费率：" + fundingRate + " - " + symbol + " - " + fundingTime);
                             }
