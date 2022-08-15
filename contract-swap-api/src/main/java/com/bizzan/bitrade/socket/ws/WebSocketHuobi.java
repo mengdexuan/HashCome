@@ -208,6 +208,13 @@ public class WebSocketHuobi extends WebSocketClient {
                 } else {
 
                     String id = "";
+                    if(jsonObject.containsKey("topic")) {
+                        id = jsonObject.getString("topic");
+                        logger.info("资金费率 topic", id);
+                        if (id == null || id.split("\\.").length < 3) {
+                            return;
+                        }
+                    }
                     if(jsonObject.containsKey("ch")) {
                         id = jsonObject.getString("ch");
                         if (id == null || id.split("\\.").length < 3) {
@@ -216,12 +223,6 @@ public class WebSocketHuobi extends WebSocketClient {
                     }
                     if(jsonObject.containsKey("rep")) {
                         id = jsonObject.getString("rep");
-                        if (id == null || id.split("\\.").length < 3) {
-                            return;
-                        }
-                    }
-                    if(jsonObject.containsKey("topic")) {
-                        id = jsonObject.getString("topic");
                         if (id == null || id.split("\\.").length < 3) {
                             return;
                         }
