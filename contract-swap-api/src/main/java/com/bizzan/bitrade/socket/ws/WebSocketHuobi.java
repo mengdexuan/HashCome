@@ -9,6 +9,7 @@ import com.bizzan.bitrade.entity.*;
 import com.bizzan.bitrade.job.ExchangePushJob;
 import com.bizzan.bitrade.service.ContractCoinService;
 import com.bizzan.bitrade.service.ContractMarketService;
+import com.bizzan.bitrade.service.ContractService;
 import com.bizzan.bitrade.util.JSONUtils;
 import com.bizzan.bitrade.util.WebSocketConnectionManage;
 import com.bizzan.bitrade.util.ZipUtils;
@@ -37,22 +38,27 @@ public class WebSocketHuobi extends WebSocketClient {
     private ContractCoinMatchFactory matchFactory;
     private ContractMarketService marketService;
     private ExchangePushJob exchangePushJob;
+    private ContractCoinService contractCoinService;
 
     public static String DEPTH = "market.%s.depth.step0"; // 深度
     public static String KLINE = "market.%s.kline.%s"; // K线
     public static String DETAIL = "market.%s.detail"; // 市场概要（最新价格、成交量等）
     public static String TRADE = "market.%s.trade.detail"; // 成交明细
+    public static String FOUNDRATE = "public.%s.funding_rate"; // 资金费率
+
+
 
     private double VOLUME_PERCENT = 0.13; // 火币成交量的百分比
 
     public static String PERIOD[] = { "1min", "5min", "15min", "30min", "60min","4hour", "1day", "1mon", "1week" };
 
-    public WebSocketHuobi(URI uri, ContractCoinMatchFactory matchFactory, ContractMarketService service, ExchangePushJob pushJob) {
+    public WebSocketHuobi(URI uri, ContractCoinMatchFactory matchFactory, ContractMarketService service, ExchangePushJob pushJob, ContractCoinService contractCoinService) {
         super(uri);
         this.uri = uri;
         this.matchFactory = matchFactory;
         this.marketService = service;
         this.exchangePushJob = pushJob;
+        this.contractCoinService = contractCoinService;
     }
 
     @Override
@@ -77,6 +83,11 @@ public class WebSocketHuobi extends WebSocketClient {
                 String tradeTopic = String.format(TRADE, symbol.replace("/", "").toLowerCase());
                 logger.info("[WebSocketHuobi][" + symbol + "] 成交明细订阅: " + tradeTopic);
                 sendWsMarket("sub", tradeTopic);
+
+                // 订阅资金费率
+                String foundTopic = String.format(FOUNDRATE, symbol.replace("/", "").toLowerCase());
+                logger.info("[WebSocketHuobi][" + symbol + "] 资金费率订阅: " + foundTopic);
+                sendWsFound("sub", foundTopic);
 
                 // 订阅实时K线
 //                for(String period : PERIOD) {
@@ -209,6 +220,12 @@ public class WebSocketHuobi extends WebSocketClient {
                             return;
                         }
                     }
+                    if(jsonObject.containsKey("topic")) {
+                        id = jsonObject.getString("topic");
+                        if (id == null || id.split("\\.").length < 3) {
+                            return;
+                        }
+                    }
                     if(id.equals("")) {
                         return;
                     }
@@ -321,7 +338,7 @@ public class WebSocketHuobi extends WebSocketClient {
                             //logger.info("[WebSocketHuobi] 价格更新：{}", close);
                         }
                     }else if(type.equals("trade")) { // 成交明细
-                        String tick = jsonObject.getString("tick");
+                        String tick = jsonObject.getString("data");
                         if (null != tick && !"".equals(tick) && JSONUtils.isJsonObject(tick)) {
                             JSONObject detailObj = JSONObject.parseObject(tick);
                             JSONArray tradeList = detailObj.getJSONArray("data");
@@ -357,6 +374,26 @@ public class WebSocketHuobi extends WebSocketClient {
 
                             //logger.info("[WebSocketHuobi] 成交明细更新：共 {} 条", tradeArrayList.size());
                         }
+                    }else if(type.equals("funding_rate")) { // 资金费率
+                        String data = jsonObject.getString("data");
+
+                        if (null != data && !"".equals(data) && JSONUtils.isJsonArray(data)) {
+
+                            JSONArray list = jsonObject.getJSONArray("data");
+
+                            for(int i = 0; i < list.size(); i++) {
+                                JSONObject obj = list.getJSONObject(i);
+
+                                long fundingTime = obj.getLongValue("funding_time"); // 当期资金费率时间
+                                BigDecimal fundingRate = obj.getBigDecimal("funding_rate"); // 当期资金费率
+                                BigDecimal estimatedRate = obj.getBigDecimal("estimated_rate"); // 下一期预测资金费率
+                                long settlementTime = obj.getLongValue("settlement_time"); // 结算时间
+                                ContractCoin coin = this.contractCoinService.findBySymbol(symbol);
+                                coin.setFeePercent(fundingRate);
+
+                                logger.info("[WebSocketHuobi] 资金费率：" + fundingRate + " - " + symbol + " - " + fundingTime);
+                            }
+                        }
                     }
                 }
             }
@@ -372,6 +409,13 @@ public class WebSocketHuobi extends WebSocketClient {
     public void sendWsMarket(String op, String topic) {
         JSONObject req = new JSONObject();
         req.put(op, topic);
+        send(req.toString());
+    }
+
+    public void sendWsFound(String op, String topic) {
+        JSONObject req = new JSONObject();
+        req.put("op", op);
+        req.put("top", topic);
         send(req.toString());
     }
 
