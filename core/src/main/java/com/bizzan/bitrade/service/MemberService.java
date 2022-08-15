@@ -58,7 +58,7 @@ public class MemberService extends BaseService {
     private MemberEvent memberEvent;
 
     //third party verify token
-    @Value("${thirdVerify.url:}")
+    @Value("${thirdVerify.url}")
     private String thirdVerifyUrl;
 
     /**
@@ -183,8 +183,9 @@ public class MemberService extends BaseService {
         // 验证token，获取用户信息
         try {
             String checkResult = HttpClientUtil.post(
-                            JSONObject.fromObject(String.format("{token:%s}", token)),
-                            this.thirdVerifyUrl, "", "");
+                            JSONObject.fromObject(String.format("{\"token\": \"%s\"}", token)),
+                            thirdVerifyUrl, "", "");
+
             JSONObject jsonObj = JSONObject.fromObject(checkResult);
             if (jsonObj.isEmpty() || (200 != (int)jsonObj.get("code")))  {
                 log.error("third party token user info is null");
@@ -253,7 +254,7 @@ public class MemberService extends BaseService {
     public List<Member> findPromotionMember(Long id) {
         return memberDao.findAllByInviterId(id);
     }
-    
+
     public Page<Member> findPromotionMemberPage(Integer pageNo, Integer pageSize,Long id){
         Sort orders = Criteria.sortStatic("id");
         PageRequest pageRequest = new PageRequest(pageNo, pageSize, orders);
@@ -278,7 +279,7 @@ public class MemberService extends BaseService {
         specification.add(Restrictions.eq("status", status, false));
         return memberDao.findAll(specification, pageRequest);
     }
-    
+
     public Page<Member> findByPage(Integer pageNo, Integer pageSize) {
         //排序方式 (需要倒序 这样    Criteria.sort("id","createTime.desc") ) //参数实体类为字段名
         Sort orders = Criteria.sortStatic("id");
@@ -356,7 +357,7 @@ public class MemberService extends BaseService {
     public boolean userPromotionCodeIsExist(String promotion) {
         return memberDao.getAllByPromotionCodeEquals(promotion).size() > 0 ? true : false;
     }
-    
+
     public Long getMaxId() {
     	return memberDao.getMaxId();
     }
