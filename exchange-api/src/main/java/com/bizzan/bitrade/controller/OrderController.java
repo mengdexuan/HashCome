@@ -162,9 +162,24 @@ public class OrderController {
                 return MessageResult.error(500, "成交额至少为" + exchangeCoin.getMinTurnover());
             }
         } else {
-            if (quoteAmount != null && quoteAmount.compareTo(BigDecimal.ZERO) > 0 && price.compareTo(BigDecimal.ZERO) > 0) {
+            if (quoteAmount != null && quoteAmount.compareTo(BigDecimal.ZERO) > 0) {
                 if (amount == null || amount.compareTo(BigDecimal.ZERO) <=0) {
-                    amount = quoteAmount.divide(price, exchangeCoin.getCoinScale(), BigDecimal.ROUND_DOWN);
+                    if (price.compareTo(BigDecimal.ZERO) > 0) {
+                        amount = quoteAmount.divide(price, exchangeCoin.getCoinScale(), BigDecimal.ROUND_DOWN);
+                    } else {
+                        // 获取最新价格
+                        String serviceName = "BITRADE-MARKET";
+                        String marketUrl = "http://" + serviceName + "/market/symbol-thumb";
+                        ParameterizedTypeReference<List<CoinThumb>> typeRef = new ParameterizedTypeReference<List<CoinThumb>>() {};
+                        ResponseEntity<List<CoinThumb>> responseEntity = restTemplate.exchange(marketUrl, HttpMethod.POST, new HttpEntity<>(null), typeRef);
+                        List<CoinThumb> thumbList =responseEntity.getBody();
+                        for(int i = 0; i < thumbList.size(); i++) {
+                            CoinThumb thumb = thumbList.get(i);
+                            if(symbol.equals(thumb.getSymbol())) {
+                                amount = quoteAmount.divide(thumb.getClose(), exchangeCoin.getCoinScale(), BigDecimal.ROUND_DOWN);
+                            }
+                        }
+                    }
                 }
             }
             amount = amount.setScale(exchangeCoin.getCoinScale(), BigDecimal.ROUND_DOWN);
