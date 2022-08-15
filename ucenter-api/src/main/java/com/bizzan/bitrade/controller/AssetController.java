@@ -344,12 +344,20 @@ public class AssetController {
      */
     @PostMapping("wallet/trans")
     public MessageResult trans(@SessionAttribute(SESSION_MEMBER) AuthMember member, @RequestBody TransferAsset transferAsset) {
-        WalletType assetType = WalletType.SWAP;
+        Member member1 = memberService.findOne(member.getId());
+        if(member1 == null) {
+            return MessageResult.error("非法请求");
+        }
+
         if (transferAsset.getTransferType().equals("1")) { //现货
-            assetType = WalletType.SPOT;
             MemberWallet fromWallet = walletService.findByCoinUnitAndMemberId(transferAsset.getCurrency(), member.getId());
-            Assert.notNull(fromWallet, "币种钱包不存在!");
+            if(fromWallet == null) {
+                return MessageResult.error("转出或转入钱包不存在");
+            }
             if (transferAsset.getType().equals("1")) { //转出
+                if(fromWallet.getBalance().compareTo(transferAsset.getFromProfit()) < 0) {
+                    return MessageResult.error("转出钱包余额不足");
+                }
                 walletService.deductBalance(fromWallet, transferAsset.getFromProfit());
             } else if(transferAsset.getType().equals("2")) { //转入
                 walletService.increaseBalance(fromWallet.getId(), transferAsset.getFromProfit());
@@ -357,14 +365,19 @@ public class AssetController {
                 return MessageResult.error("参数传递错误");
             }
         } else if (transferAsset.getTransferType().equals("2")) { //合约
-
-            ContractCoin coin = contractCoinService.findBySymbol(transferAsset.getCurrency());
-            if(coin == null) {
+            if(!transferAsset.getCurrency().equals("USDT")) {
+                return MessageResult.error("划转币本位，暂时未支持");
+            }
+            List<ContractCoin> coins = contractCoinService.findAll();
+            if(coins.size() == 0) {
                 return MessageResult.error("合约交易对不存在");
             }
-            MemberContractWallet fromWallet = memberContractWalletService.findByMemberIdAndContractCoin(member.getId(), coin);
+            MemberContractWallet fromWallet = memberContractWalletService.findByMemberIdAndContractCoin(member.getId(), coins.get(0));
             Assert.notNull(fromWallet, "币种钱包不存在!");
             if (transferAsset.getType().equals("1")) { //转出
+                if(fromWallet.getUsdtBalance().compareTo(transferAsset.getFromProfit()) < 0) {
+                    return MessageResult.error("转出钱包余额不足");
+                }
                 memberContractWalletService.decreaseUsdtBalance(fromWallet.getId(), transferAsset.getFromProfit());
             } else if(transferAsset.getType().equals("2")) { //转入
                 memberContractWalletService.increaseUsdtBalance(fromWallet.getId(), transferAsset.getFromProfit());
