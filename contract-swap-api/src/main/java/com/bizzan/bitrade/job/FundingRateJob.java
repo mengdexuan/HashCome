@@ -93,7 +93,7 @@ public class FundingRateJob {
         BigDecimal usdtSellPosition = wallet.getUsdtSellPosition();
         BigDecimal usdtFrozenSellPosition = wallet.getUsdtFrozenSellPosition();
 
-        if (usdtBuyPosition.add(usdtFrozenBuyPosition).compareTo(BigDecimal.valueOf(0))==1){
+        if (usdtBuyPosition.add(usdtFrozenBuyPosition).compareTo(BigDecimal.valueOf(0)) > 0){
             BigDecimal rate = getRate(wallet);
 
             //多单
@@ -111,7 +111,7 @@ public class FundingRateJob {
         }
 
 
-        if (usdtSellPosition.add(usdtFrozenSellPosition).compareTo(BigDecimal.valueOf(0))==1){
+        if (usdtSellPosition.add(usdtFrozenSellPosition).compareTo(BigDecimal.valueOf(0)) > 0){
             BigDecimal rate = getRate(wallet);
 
             //空单

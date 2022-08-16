@@ -227,6 +227,7 @@ public class WebSocketHuobi extends WebSocketClient {
                             return;
                         }
                     }
+                    logger.info("资金费率 topic id", id);
                     if(id.equals("")) {
                         return;
                     }
