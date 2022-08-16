@@ -227,7 +227,6 @@ public class WebSocketHuobi extends WebSocketClient {
                             return;
                         }
                     }
-                    logger.info("资金费率 topic id"+id);
                     if(id.equals("")) {
                         logger.info("资金费率 topic msg"+message);
                         return;
@@ -419,7 +418,7 @@ public class WebSocketHuobi extends WebSocketClient {
     public void sendWsFound(String op, String topic) {
         JSONObject req = new JSONObject();
         req.put("op", op);
-        req.put("top", topic);
+        req.put("topic", topic);
         send(req.toString());
     }
 
