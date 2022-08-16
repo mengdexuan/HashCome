@@ -85,7 +85,7 @@ public class WebSocketHuobi extends WebSocketClient {
                 sendWsMarket("sub", tradeTopic);
 
                 // 订阅资金费率
-                String foundTopic = String.format(FOUNDRATE, symbol.replace("/", "").toLowerCase());
+                String foundTopic = String.format(FOUNDRATE, symbol.replace("/", "-").toUpperCase());
                 logger.info("[WebSocketHuobi][" + symbol + "] 资金费率订阅: " + foundTopic);
                 sendWsFound("sub", foundTopic);
 
