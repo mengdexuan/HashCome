@@ -210,7 +210,7 @@ public class WebSocketHuobi extends WebSocketClient {
                     String id = "";
                     if(jsonObject.containsKey("topic")) {
                         id = jsonObject.getString("topic");
-                        logger.info("资金费率 topic", id);
+                        logger.info("资金费率 topic"+id);
                         if (id == null || id.split("\\.").length < 3) {
                             return;
                         }
@@ -227,9 +227,9 @@ public class WebSocketHuobi extends WebSocketClient {
                             return;
                         }
                     }
-                    logger.info("资金费率 topic id", id);
+                    logger.info("资金费率 topic id"+id);
                     if(id.equals("")) {
-                        logger.info("资金费率 topic msg", message);
+                        logger.info("资金费率 topic msg"+message);
                         return;
                     }
                     StringBuilder sb = new StringBuilder(id.split("\\.")[1]);
