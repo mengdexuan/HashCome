@@ -229,6 +229,7 @@ public class WebSocketHuobi extends WebSocketClient {
                     }
                     logger.info("资金费率 topic id", id);
                     if(id.equals("")) {
+                        logger.info("资金费率 topic msg", message);
                         return;
                     }
                     StringBuilder sb = new StringBuilder(id.split("\\.")[1]);
