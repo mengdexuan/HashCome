@@ -136,6 +136,20 @@ public class OrderController {
         if (coin == null) {
             return MessageResult.error(500, msService.getMessage("NONSUPPORT_COIN"));
         }
+        if (type == ExchangeOrderType.MARKET_PRICE) {
+            // 获取最新价格
+            String serviceName = "BITRADE-MARKET";
+            String marketUrl = "http://" + serviceName + "/market/symbol-thumb";
+            ParameterizedTypeReference<List<CoinThumb>> typeRef = new ParameterizedTypeReference<List<CoinThumb>>() {};
+            ResponseEntity<List<CoinThumb>> responseEntity = restTemplate.exchange(marketUrl, HttpMethod.POST, new HttpEntity<>(null), typeRef);
+            List<CoinThumb> thumbList =responseEntity.getBody();
+            for(int i = 0; i < thumbList.size(); i++) {
+                CoinThumb thumb = thumbList.get(i);
+                if(symbol.equals(thumb.getSymbol())) {
+                    price = thumb.getClose();
+                }
+            }
+        }
         //设置价格精度
         price = price.setScale(exchangeCoin.getBaseCoinScale(), BigDecimal.ROUND_DOWN);
         //委托数量和精度控制
@@ -143,18 +157,7 @@ public class OrderController {
             if (quoteAmount != null && quoteAmount.compareTo(BigDecimal.ZERO) > 0) {
                 amount = quoteAmount;
             } else {
-                // 获取最新价格
-                String serviceName = "BITRADE-MARKET";
-                String marketUrl = "http://" + serviceName + "/market/symbol-thumb";
-                ParameterizedTypeReference<List<CoinThumb>> typeRef = new ParameterizedTypeReference<List<CoinThumb>>() {};
-                ResponseEntity<List<CoinThumb>> responseEntity = restTemplate.exchange(marketUrl, HttpMethod.POST, new HttpEntity<>(null), typeRef);
-                List<CoinThumb> thumbList =responseEntity.getBody();
-                for(int i = 0; i < thumbList.size(); i++) {
-                    CoinThumb thumb = thumbList.get(i);
-                    if(symbol.equals(thumb.getSymbol())) {
-                        amount = amount.multiply(thumb.getClose());
-                    }
-                }
+                amount = amount.multiply(price);
             }
             amount = amount.setScale(exchangeCoin.getBaseCoinScale(), BigDecimal.ROUND_DOWN);
             //最小成交额控制
@@ -164,22 +167,7 @@ public class OrderController {
         } else {
             if (quoteAmount != null && quoteAmount.compareTo(BigDecimal.ZERO) > 0) {
                 if (amount == null || amount.compareTo(BigDecimal.ZERO) <=0) {
-                    if (price.compareTo(BigDecimal.ZERO) > 0) {
-                        amount = quoteAmount.divide(price, exchangeCoin.getCoinScale(), BigDecimal.ROUND_DOWN);
-                    } else {
-                        // 获取最新价格
-                        String serviceName = "BITRADE-MARKET";
-                        String marketUrl = "http://" + serviceName + "/market/symbol-thumb";
-                        ParameterizedTypeReference<List<CoinThumb>> typeRef = new ParameterizedTypeReference<List<CoinThumb>>() {};
-                        ResponseEntity<List<CoinThumb>> responseEntity = restTemplate.exchange(marketUrl, HttpMethod.POST, new HttpEntity<>(null), typeRef);
-                        List<CoinThumb> thumbList =responseEntity.getBody();
-                        for(int i = 0; i < thumbList.size(); i++) {
-                            CoinThumb thumb = thumbList.get(i);
-                            if(symbol.equals(thumb.getSymbol())) {
-                                amount = quoteAmount.divide(thumb.getClose(), exchangeCoin.getCoinScale(), BigDecimal.ROUND_DOWN);
-                            }
-                        }
-                    }
+                    amount = quoteAmount.divide(price, exchangeCoin.getCoinScale(), BigDecimal.ROUND_DOWN);
                 }
             }
             amount = amount.setScale(exchangeCoin.getCoinScale(), BigDecimal.ROUND_DOWN);
@@ -209,12 +197,12 @@ public class OrderController {
         }
         //如果有最低卖价限制，出价不能低于此价,且禁止市场价格卖
         if (direction == ExchangeOrderDirection.SELL && exchangeCoin.getMinSellPrice().compareTo(BigDecimal.ZERO) > 0
-                && ((price.compareTo(exchangeCoin.getMinSellPrice()) < 0) || type == ExchangeOrderType.MARKET_PRICE)) {
+                && ((price.compareTo(exchangeCoin.getMinSellPrice()) < 0) /*|| type == ExchangeOrderType.MARKET_PRICE*/)) {
             return MessageResult.error(500, "不能低于最低限价: " + exchangeCoin.getMinSellPrice());
         }
         // 如果有最高买价限制，出价不能高于此价，且禁止市场价格买
         if(direction == ExchangeOrderDirection.BUY && exchangeCoin.getMaxBuyPrice().compareTo(BigDecimal.ZERO) > 0
-        		&& ((price.compareTo(exchangeCoin.getMaxBuyPrice()) > 0) || type == ExchangeOrderType.MARKET_PRICE)) {
+        		&& ((price.compareTo(exchangeCoin.getMaxBuyPrice()) > 0) /*|| type == ExchangeOrderType.MARKET_PRICE*/)) {
         	return MessageResult.error(500, "不能高于最高限价:" + exchangeCoin.getMaxBuyPrice());
         }
         //查看是否启用市价买卖
@@ -320,8 +308,7 @@ public class OrderController {
         order.setDirection(direction);
         if(order.getType() == ExchangeOrderType.MARKET_PRICE){
             order.setPrice(BigDecimal.ZERO);
-        }
-        else{
+        } else{
             order.setPrice(price);
         }
         order.setUseDiscount("0");
