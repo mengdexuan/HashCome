@@ -85,7 +85,7 @@ public class WebSocketHuobi extends WebSocketClient {
                 sendWsMarket("sub", tradeTopic);
 
                 // 订阅资金费率
-                String foundTopic = String.format(FOUNDRATE, symbol.replace("/", "-").toUpperCase());
+                String foundTopic = String.format(FOUNDRATE, symbol.replace("/", "").toLowerCase());
                 logger.info("[WebSocketHuobi][" + symbol + "] 资金费率订阅: " + foundTopic);
                 sendWsFound("sub", foundTopic);
 
@@ -210,7 +210,6 @@ public class WebSocketHuobi extends WebSocketClient {
                     String id = "";
                     if(jsonObject.containsKey("topic")) {
                         id = jsonObject.getString("topic");
-                        logger.info("资金费率 topic"+id);
                         if (id == null || id.split("\\.").length < 3) {
                             return;
                         }
@@ -228,7 +227,6 @@ public class WebSocketHuobi extends WebSocketClient {
                         }
                     }
                     if(id.equals("")) {
-                        logger.info("资金费率 topic msg"+message);
                         return;
                     }
                     StringBuilder sb = new StringBuilder(id.split("\\.")[1]);
@@ -378,7 +376,6 @@ public class WebSocketHuobi extends WebSocketClient {
                         }
                     }else if(type.equals("funding_rate")) { // 资金费率
                         String data = jsonObject.getString("data");
-                        logger.info("[WebSocketHuobi] 资金费率：" + data);
                         if (null != data && !"".equals(data) && JSONUtils.isJsonArray(data)) {
 
                             JSONArray list = jsonObject.getJSONArray("data");
@@ -397,6 +394,8 @@ public class WebSocketHuobi extends WebSocketClient {
                                 logger.info("[WebSocketHuobi] 资金费率：" + fundingRate + " - " + symbol + " - " + fundingTime);
                             }
                         }
+                    } else {
+                        logger.error("[WebSocketHuobi] 未处理：" + message);
                     }
                 }
             }
