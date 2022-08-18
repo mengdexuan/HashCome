@@ -101,7 +101,9 @@ public class OrderController {
             return MessageResult.error(500, msService.getMessage("EXORBITANT_PRICES"));
         }
         //判断数量小于零
-        if ((amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) && (quoteAmount == null || quoteAmount.compareTo(BigDecimal.ZERO) <= 0)) {
+        if (amount != null && quoteAmount != null) {
+            return MessageResult.error(500, msService.getMessage("NUMBER_OF_ILLEGAL"));
+        } else if ((amount != null && amount.compareTo(BigDecimal.ZERO) <= 0) || (quoteAmount != null && quoteAmount.compareTo(BigDecimal.ZERO) <= 0)) {
             return MessageResult.error(500, msService.getMessage("NUMBER_OF_ILLEGAL"));
         }
         //根据交易对名称（symbol）获取交易对儿信息
@@ -153,23 +155,13 @@ public class OrderController {
         //设置价格精度
         price = price.setScale(exchangeCoin.getBaseCoinScale(), BigDecimal.ROUND_DOWN);
         //委托数量和精度控制
-        if (direction == ExchangeOrderDirection.BUY && type == ExchangeOrderType.MARKET_PRICE) {
-            if (quoteAmount != null && quoteAmount.compareTo(BigDecimal.ZERO) > 0) {
-                amount = quoteAmount;
-            } else {
-                amount = amount.multiply(price);
-            }
-            amount = amount.setScale(exchangeCoin.getBaseCoinScale(), BigDecimal.ROUND_DOWN);
+        if (quoteAmount != null && quoteAmount.compareTo(BigDecimal.ZERO) > 0) {
+            quoteAmount = quoteAmount.setScale(exchangeCoin.getBaseCoinScale(), BigDecimal.ROUND_DOWN);
             //最小成交额控制
-            if (amount.compareTo(exchangeCoin.getMinTurnover()) < 0) {
+            if (quoteAmount.compareTo(exchangeCoin.getMinTurnover()) < 0) {
                 return MessageResult.error(500, "成交额至少为" + exchangeCoin.getMinTurnover());
             }
         } else {
-            if (quoteAmount != null && quoteAmount.compareTo(BigDecimal.ZERO) > 0) {
-                if (amount == null || amount.compareTo(BigDecimal.ZERO) <=0) {
-                    amount = quoteAmount.divide(price, exchangeCoin.getCoinScale(), BigDecimal.ROUND_DOWN);
-                }
-            }
             amount = amount.setScale(exchangeCoin.getCoinScale(), BigDecimal.ROUND_DOWN);
             //成交量范围控制
             if(exchangeCoin.getMaxVolume()!=null&&exchangeCoin.getMaxVolume().compareTo(BigDecimal.ZERO)!=0
@@ -184,9 +176,9 @@ public class OrderController {
         if (price.compareTo(BigDecimal.ZERO) <= 0 && type == ExchangeOrderType.LIMIT_PRICE) {
             return MessageResult.error(500, msService.getMessage("EXORBITANT_PRICES"));
         }
-        if (amount.compareTo(BigDecimal.ZERO) <= 0) {
-            return MessageResult.error(500, msService.getMessage("NUMBER_OF_ILLEGAL"));
-        }
+//        if (amount.compareTo(BigDecimal.ZERO) <= 0) {
+//            return MessageResult.error(500, msService.getMessage("NUMBER_OF_ILLEGAL"));
+//        }
         MemberWallet baseCoinWallet = walletService.findByCoinUnitAndMemberId(baseCoin, member.getId());
         MemberWallet exCoinWallet = walletService.findByCoinUnitAndMemberId(exCoin, member.getId());
         if (baseCoinWallet == null || exCoinWallet == null) {
@@ -314,6 +306,7 @@ public class OrderController {
         order.setUseDiscount("0");
         //限价买入单时amount为用户设置的总成交额
         order.setAmount(amount);
+        order.setQuoteAmount(quoteAmount);
 
         MessageResult mr = orderService.addOrder(member.getId(), order);
         if (mr.getCode() != 0) {

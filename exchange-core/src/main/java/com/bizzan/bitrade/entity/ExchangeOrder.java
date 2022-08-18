@@ -21,6 +21,9 @@ public class ExchangeOrder implements Serializable {
     //买入或卖出量，对于市价买入单表
     @Column(columnDefinition = "decimal(18,8) DEFAULT 0 ")
     private BigDecimal amount = BigDecimal.ZERO;
+    //买入或卖出金额，对于市价买入单表
+    @Column(columnDefinition = "decimal(18,8) DEFAULT 0 ")
+    private BigDecimal quoteAmount = BigDecimal.ZERO;
     //交易对符号
     private String symbol;
     //成交量

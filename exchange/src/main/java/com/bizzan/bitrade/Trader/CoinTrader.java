@@ -39,9 +39,9 @@ public class CoinTrader {
     //交易对信息
     private ExchangeCoinPublishType publishType;
     private String clearTime;
-    
+
     private SimpleDateFormat dateTimeFormat;
-    
+
 
     public CoinTrader(String symbol){
         this.symbol = symbol;
@@ -124,7 +124,7 @@ public class CoinTrader {
     /**
      * 主动交易输入的订单，交易不完成的会输入到队列
      * @param exchangeOrder
-     * @throws ParseException 
+     * @throws ParseException
      */
     public void trade(ExchangeOrder exchangeOrder) throws ParseException{
         if(tradingHalt) {
@@ -135,8 +135,16 @@ public class CoinTrader {
             logger.info("unsupported symbol,coin={},base={}", exchangeOrder.getCoinSymbol(), exchangeOrder.getBaseSymbol());
             return ;
         }
-        if(exchangeOrder.getAmount().compareTo(BigDecimal.ZERO) <=0 || exchangeOrder.getAmount().subtract(exchangeOrder.getTradedAmount()).compareTo(BigDecimal.ZERO)<=0){
-            return ;
+        if (exchangeOrder.getAmount() != null && exchangeOrder.getQuoteAmount() != null) {
+            return
+        } else if (exchangeOrder.getAmount() != null) {
+            if(exchangeOrder.getAmount().compareTo(BigDecimal.ZERO) <=0 || exchangeOrder.getAmount().subtract(exchangeOrder.getTradedAmount()).compareTo(BigDecimal.ZERO)<=0){
+                return ;
+            }
+        } else if (exchangeOrder.getQuoteAmount() != null) {
+            if(exchangeOrder.getQuoteAmount().compareTo(BigDecimal.ZERO) <=0 || exchangeOrder.getQuoteAmount().subtract(exchangeOrder.getTurnover()).compareTo(BigDecimal.ZERO)<=0){
+                return ;
+            }
         }
 
         TreeMap<BigDecimal,MergeOrder> limitPriceOrderList;
@@ -187,7 +195,7 @@ public class CoinTrader {
      * @param focusedOrder
      * @param canEnterList
      */
-    
+
     public void matchLimitPriceWithLPListByFENTAN(TreeMap<BigDecimal,MergeOrder> lpList, ExchangeOrder focusedOrder,boolean canEnterList) {
     	List<ExchangeTrade> exchangeTrades = new ArrayList<>();
         List<ExchangeOrder> completedOrders = new ArrayList<>();
@@ -273,7 +281,9 @@ public class CoinTrader {
 
                     //处理匹配
                     ExchangeTrade trade = processMatch(focusedOrder, matchOrder);
-                    exchangeTrades.add(trade);
+                    if (trade != null) {
+                        exchangeTrades.add(trade);
+                    }
                     //判断匹配单是否完成
                     if (matchOrder.isCompleted()) {
                         //当前匹配的订单完成交易，删除该订单
@@ -410,9 +420,9 @@ public class CoinTrader {
      * @return
      */
     private BigDecimal calculateTradedAmount(ExchangeOrder order, BigDecimal dealPrice){
-        if(order.getDirection() == ExchangeOrderDirection.BUY && order.getType() == ExchangeOrderType.MARKET_PRICE){
+        if(order.getQuoteAmount() != null){
             //剩余成交量
-            BigDecimal leftTurnover = order.getAmount().subtract(order.getTurnover());
+            BigDecimal leftTurnover = order.getQuoteAmount().subtract(order.getTurnover());
             return leftTurnover.divide(dealPrice,coinScale,BigDecimal.ROUND_DOWN);
         }
         else{
@@ -427,11 +437,11 @@ public class CoinTrader {
      * @return
      */
     private BigDecimal adjustMarketOrderTurnover(ExchangeOrder order, BigDecimal dealPrice){
-        if(order.getDirection() == ExchangeOrderDirection.BUY && order.getType() == ExchangeOrderType.MARKET_PRICE){
-            BigDecimal leftTurnover = order.getAmount().subtract(order.getTurnover());
+        if(order.getQuoteAmount() != null){
+            BigDecimal leftTurnover = order.getQuoteAmount().subtract(order.getTurnover());
             if(leftTurnover.divide(dealPrice,coinScale,BigDecimal.ROUND_DOWN)
                     .compareTo(BigDecimal.ZERO)==0){
-                order.setTurnover(order.getAmount());
+                order.setTurnover(order.getQuoteAmount());
                 return leftTurnover;
             }
         }
@@ -484,13 +494,22 @@ public class CoinTrader {
         exchangeTrade.setBuyTurnover(turnover);
         exchangeTrade.setSellTurnover(turnover);
         //校正市价单剩余成交额
-        if(ExchangeOrderType.MARKET_PRICE == focusedOrder.getType() && focusedOrder.getDirection() == ExchangeOrderDirection.BUY){
+        if(focusedOrder.getQuoteAmount() != null){
             BigDecimal adjustTurnover = adjustMarketOrderTurnover(focusedOrder,dealPrice);
-            exchangeTrade.setBuyTurnover(turnover.add(adjustTurnover));
+            if (focusedOrder.getDirection() == ExchangeOrderDirection.BUY) {
+                exchangeTrade.setBuyTurnover(turnover.add(adjustTurnover));
+            } else {
+                exchangeTrade.setSellTurnover(turnover.add(adjustTurnover));
+            }
         }
-        else if(ExchangeOrderType.MARKET_PRICE == matchOrder.getType() && matchOrder.getDirection() == ExchangeOrderDirection.BUY){
+
+        if(matchOrder.getQuoteAmount() != null){
             BigDecimal adjustTurnover = adjustMarketOrderTurnover(matchOrder,dealPrice);
-            exchangeTrade.setBuyTurnover(turnover.add(adjustTurnover));
+            if (matchOrder.getDirection() == ExchangeOrderDirection.BUY) {
+                exchangeTrade.setBuyTurnover(turnover.add(adjustTurnover));
+            } else {
+                exchangeTrade.setSellTurnover(turnover.add(adjustTurnover));
+            }
         }
 
         if (focusedOrder.getDirection() == ExchangeOrderDirection.BUY) {
@@ -577,7 +596,7 @@ public class CoinTrader {
         }
         return  exchangeTrade;
     }
-    
+
     public void handleExchangeTrade(List<ExchangeTrade> trades){
         //logger.info("handleExchangeTrade:{}", trades);
         if(trades.size() > 0) {
