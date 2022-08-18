@@ -221,6 +221,7 @@ public class MemberService extends BaseService {
             log.error("can't set token expire");
             return null;
         }
+        log.info(thirdVerifyUrl+":"+member.getEmail());
 
         return member;
     }
