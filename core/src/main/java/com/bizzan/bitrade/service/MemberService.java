@@ -173,7 +173,6 @@ public class MemberService extends BaseService {
 
     @Transactional(rollbackFor = Exception.class)
     public Member loginWithToken(String token, String ip, String device) {
-        log.info(thirdVerifyUrl+":"+token);
         if (StringUtils.isBlank(token)) {
             return null;
         }
@@ -201,13 +200,12 @@ public class MemberService extends BaseService {
             return null;
         }
 
-        log.info(thirdVerifyUrl+":"+checkToken.getEmail());
-
         //判断用户是否存在, 不存在则注册
+        log.info(thirdVerifyUrl+":"+checkToken.getEmail());
         Member member = memberDao.findMemberByEmail(checkToken.getEmail());
         if (null == member) {
             try {
-                log.info("register member"+checkToken.getEmail());
+                log.info(thirdVerifyUrl+":register member"+checkToken.getEmail());
                 member = autoRegisterByEmail(checkToken.getEmail(), checkToken.getEmail(), ip);
             } catch (InterruptedException e) {
                 log.error("register member fail or register record fail");
@@ -215,6 +213,7 @@ public class MemberService extends BaseService {
             }
         }
 
+        log.info(thirdVerifyUrl+":"+checkToken.getExpire());
         SimpleDateFormat sdf =  new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         try {
             member.setTokenExpireTime(sdf.parse(checkToken.getExpire()));
