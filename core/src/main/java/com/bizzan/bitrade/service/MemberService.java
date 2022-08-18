@@ -186,6 +186,7 @@ public class MemberService extends BaseService {
                             JSONObject.fromObject(String.format("{\"token\": \"%s\"}", token)),
                             thirdVerifyUrl, "", "");
 
+            log.info(thirdVerifyUrl+":"+checkResult);
             JSONObject jsonObj = JSONObject.fromObject(checkResult);
             if (jsonObj.isEmpty() || (200 != (int)jsonObj.get("code")))  {
                 log.error("third party token user info is null");
@@ -202,6 +203,7 @@ public class MemberService extends BaseService {
         Member member = memberDao.findMemberByEmail(checkToken.getEmail());
         if (null == member) {
             try {
+                log.info("register member"+checkToken.getEmail());
                 member = autoRegisterByEmail(checkToken.getEmail(), checkToken.getEmail(), ip);
             } catch (InterruptedException e) {
                 log.error("register member fail or register record fail");
