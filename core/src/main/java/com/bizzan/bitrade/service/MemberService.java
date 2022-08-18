@@ -173,6 +173,7 @@ public class MemberService extends BaseService {
 
     @Transactional(rollbackFor = Exception.class)
     public Member loginWithToken(String token, String ip, String device) {
+        log.info(thirdVerifyUrl+":"+token);
         if (StringUtils.isBlank(token)) {
             return null;
         }
@@ -187,6 +188,7 @@ public class MemberService extends BaseService {
                             thirdVerifyUrl, "", "");
 
             log.info(thirdVerifyUrl+":"+checkResult);
+
             JSONObject jsonObj = JSONObject.fromObject(checkResult);
             if (jsonObj.isEmpty() || (200 != (int)jsonObj.get("code")))  {
                 log.error("third party token user info is null");
@@ -198,6 +200,8 @@ public class MemberService extends BaseService {
             log.error("can't get third party token user info due to network");
             return null;
         }
+
+        log.info(thirdVerifyUrl+":"+checkToken.getEmail());
 
         //判断用户是否存在, 不存在则注册
         Member member = memberDao.findMemberByEmail(checkToken.getEmail());
