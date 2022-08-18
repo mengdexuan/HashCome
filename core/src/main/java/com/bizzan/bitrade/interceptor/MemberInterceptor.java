@@ -52,9 +52,9 @@ public class MemberInterceptor implements HandlerInterceptor {
 //                member.setTokenExpireTime(calendar.getTime());
                 memberService.save(member);
                 String ip = getRemoteIp(request);
-                log.info("login"+member.getEmail()+":"+ip);
                 memberEvent.onLoginSuccess(member, request.getRemoteAddr(), "token_login");
                 session.setAttribute(SysConstant.SESSION_MEMBER, AuthMember.toAuthMember(member));
+                log.info("{} login success", member.getEmail());
                 return true;
             } else {
                 ajaxReturn(response, 4000, "当前登录状态过期，请您重新登录！");

@@ -8,7 +8,7 @@ import lombok.Data;
 //        "expire": "2023-08-10 14:22:28" //过期时间
 @Data
 public class CheckToken {
-    private Long userId;
+    private Integer userId;
     private String email;
     private String mobile;
     private String expire;
