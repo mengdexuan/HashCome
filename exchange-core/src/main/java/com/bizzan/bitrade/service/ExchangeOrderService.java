@@ -101,8 +101,8 @@ public class ExchangeOrderService extends BaseService {
                 return MessageResult.error("钱包已锁定");
             }
             BigDecimal turnover;
-            if (order.getType() == ExchangeOrderType.MARKET_PRICE) {
-                turnover = order.getAmount();
+            if (order.getQuoteAmount() != null) {
+                turnover = order.getQuoteAmount();
             } else {
                 turnover = order.getAmount().multiply(order.getPrice());
             }
@@ -120,10 +120,17 @@ public class ExchangeOrderService extends BaseService {
             if(wallet.getIsLock().equals(BooleanEnum.IS_TRUE)){
                 return MessageResult.error("钱包已锁定");
             }
-            if (wallet.getBalance().compareTo(order.getAmount()) < 0) {
+            BigDecimal amount;
+            if (order.getQuoteAmount() != null) {
+                ExchangeCoin exchangeCoin = exchangeCoinService.findBySymbol(order.getSymbol());
+                amount = order.getQuoteAmount().divide(order.getPrice(), exchangeCoin.getCoinScale(), BigDecimal.ROUND_DOWN);
+            } else {
+                amount = order.getAmount();
+            }
+            if (wallet.getBalance().compareTo(amount) < 0) {
                 return MessageResult.error(500, msService.getMessage("INSUFFICIENT_COIN") + order.getCoinSymbol());
             } else {
-                MessageResult result = memberWalletService.freezeBalance(wallet, order.getAmount());
+                MessageResult result = memberWalletService.freezeBalance(wallet, amount);
                 if (result.getCode() != 0) {
                     return MessageResult.error(500, msService.getMessage("INSUFFICIENT_COIN") + order.getCoinSymbol());
                 }
@@ -152,7 +159,7 @@ public class ExchangeOrderService extends BaseService {
         specification.add(Restrictions.ne("status", ExchangeOrderStatus.TRADING, false));
         return exchangeOrderRepository.findAll(specification, pageRequest);
     }
-    
+
     /**
      * 查询固定时间前的可删除订单
      * @param beforeTime
@@ -161,7 +168,7 @@ public class ExchangeOrderService extends BaseService {
     public List<ExchangeOrder> queryHistoryDelete(long beforeTime){
     	return exchangeOrderRepository.queryHistoryDeleteList(beforeTime);
     }
-    
+
     /**
      * 删除可删除订单
      * @param beforeTime
@@ -170,7 +177,7 @@ public class ExchangeOrderService extends BaseService {
     public int deleteHistory(long beforeTime) {
     	return exchangeOrderRepository.deleteHistory(beforeTime);
     }
-    
+
     /**
      * 个人中心历史委托
      * @param uid
@@ -291,7 +298,7 @@ public class ExchangeOrderService extends BaseService {
             log.error("invalid trade symbol {}", buyOrder.getSymbol());
             return MessageResult.error(500, "invalid trade symbol {}" + buyOrder.getSymbol());
         }
-        // 根据memberId锁表，防止死锁 
+        // 根据memberId锁表，防止死锁
         DB.query("select id from member_wallet where member_id = ? for update;",buyOrder.getMemberId());
         if(!buyOrder.getMemberId().equals(sellOrder.getMemberId())) {
             DB.query("select id from member_wallet where member_id = ? for update;", sellOrder.getMemberId());
@@ -507,7 +514,7 @@ public class ExchangeOrderService extends BaseService {
                         memberTransaction.setSymbol(incomeSymbol);
                         memberTransaction.setType(TransactionType.PROMOTION_AWARD);
                         transactionService.save(memberTransaction);
-                        
+
                         RewardRecord rewardRecord1 = new RewardRecord();
                         rewardRecord1.setAmount(reward1);
                         rewardRecord1.setCoin(memberWallet1.getCoin());

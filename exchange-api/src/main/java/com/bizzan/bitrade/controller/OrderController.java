@@ -298,11 +298,12 @@ public class OrderController {
         order.setCoinSymbol(exCoin);
         order.setType(type);
         order.setDirection(direction);
-        if(order.getType() == ExchangeOrderType.MARKET_PRICE){
-            order.setPrice(BigDecimal.ZERO);
-        } else{
-            order.setPrice(price);
-        }
+//        if(order.getType() == ExchangeOrderType.MARKET_PRICE){
+//            order.setPrice(BigDecimal.ZERO);
+//        } else{
+//            order.setPrice(price);
+//        }
+        order.setPrice(price);
         order.setUseDiscount("0");
         //限价买入单时amount为用户设置的总成交额
         order.setAmount(amount);
