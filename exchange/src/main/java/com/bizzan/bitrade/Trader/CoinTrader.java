@@ -136,7 +136,7 @@ public class CoinTrader {
             return ;
         }
         if (exchangeOrder.getAmount() != null && exchangeOrder.getQuoteAmount() != null) {
-            return
+            return;
         } else if (exchangeOrder.getAmount() != null) {
             if(exchangeOrder.getAmount().compareTo(BigDecimal.ZERO) <=0 || exchangeOrder.getAmount().subtract(exchangeOrder.getTradedAmount()).compareTo(BigDecimal.ZERO)<=0){
                 return ;
