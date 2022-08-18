@@ -349,7 +349,9 @@ public class AssetController {
             return MessageResult.error("非法请求");
         }
 
+        WalletType assetType = WalletType.SWAP;
         if (transferAsset.getTransferType().equals("1")) { //现货
+            assetType = WalletType.SPOT;
             MemberWallet fromWallet = walletService.findByCoinUnitAndMemberId(transferAsset.getCurrency(), member.getId());
             if(fromWallet == null) {
                 return MessageResult.error("转出或转入钱包不存在");
