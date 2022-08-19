@@ -72,6 +72,12 @@ public class CoinTraderEvent implements CommandLineRunner {
                 else{
                     completedOrders.add(order);
                 }
+
+                //间断一会再去查询 mongo
+                try {
+                    Thread.sleep(10);
+                } catch (InterruptedException e) {
+                }
             });
             log.info("Initialize: tradingOrders total count( " + tradingOrders.size() + ")");
             try {
