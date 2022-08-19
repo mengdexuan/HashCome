@@ -11,6 +11,7 @@ import com.bizzan.bitrade.service.ExchangeOrderService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -22,9 +23,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Executor;
 
 @Component
-public class CoinTraderEvent implements ApplicationListener<ContextRefreshedEvent> {
+public class CoinTraderEvent implements CommandLineRunner {
     private Logger log = LoggerFactory.getLogger(CoinTraderEvent.class);
     @Autowired
     CoinTraderFactory coinTraderFactory;
@@ -34,14 +36,16 @@ public class CoinTraderEvent implements ApplicationListener<ContextRefreshedEven
     private ExchangeOrderDetailService exchangeOrderDetailService;
     @Autowired
     private KafkaTemplate<String,String> kafkaTemplate;
+    @Autowired
+    Executor executor;
 
     @Override
-    public void onApplicationEvent(ContextRefreshedEvent contextRefreshedEvent) {
-        log.info("======initialize coinTrader======");
-        new Thread(()->{
+    public void run(String... strings) throws Exception {
+        executor.execute(()->{
             deal();
-        }).start();
+        });
     }
+
 
     private void deal(){
         Map<String,CoinTrader> traders = coinTraderFactory.getTraderMap();
