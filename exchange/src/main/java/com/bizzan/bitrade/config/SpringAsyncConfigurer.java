@@ -1,6 +1,7 @@
 package com.bizzan.bitrade.config;
 
 import org.springframework.aop.interceptor.AsyncUncaughtExceptionHandler;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 import org.springframework.scheduling.annotation.AsyncConfigurer;
@@ -21,6 +22,7 @@ public class SpringAsyncConfigurer implements AsyncConfigurer {
 
 	@Override
 	@Primary
+	@Bean
 	public Executor getAsyncExecutor() {
 
 		ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
