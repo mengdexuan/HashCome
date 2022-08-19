@@ -66,8 +66,8 @@ public class ExchangeOrder implements Serializable {
         if(status != ExchangeOrderStatus.TRADING) {
             return true;
         } else{
-            if(type == ExchangeOrderType.MARKET_PRICE && direction == ExchangeOrderDirection.BUY){
-                return amount.compareTo(turnover) <= 0;
+            if(quoteAmount != null){
+                return quoteAmount.compareTo(turnover) <= 0;
             }
             else{
                 return amount.compareTo(tradedAmount) <= 0;
