@@ -38,10 +38,15 @@ public class CoinTraderEvent implements ApplicationListener<ContextRefreshedEven
     @Override
     public void onApplicationEvent(ContextRefreshedEvent contextRefreshedEvent) {
         log.info("======initialize coinTrader======");
-        // coinTraderFactory.getTraderMap();
+        new Thread(()->{
+            deal();
+        }).start();
+    }
+
+    private void deal(){
         Map<String,CoinTrader> traders = coinTraderFactory.getTraderMap();
         traders.forEach((symbol,trader) ->{
-        	log.info("======CoinTrader Process: " + symbol + "======");
+            log.info("======CoinTrader Process: " + symbol + "======");
             List<ExchangeOrder> orders = exchangeOrderService.findAllTradingOrderBySymbol(symbol);
             log.info("Initialize: find all trading orders, total count( " + orders.size() + ")");
             List<ExchangeOrder> tradingOrders = new ArrayList<>();
@@ -66,18 +71,17 @@ public class CoinTraderEvent implements ApplicationListener<ContextRefreshedEven
             });
             log.info("Initialize: tradingOrders total count( " + tradingOrders.size() + ")");
             try {
-				trader.trade(tradingOrders);
-			} catch (ParseException e) {
-				e.printStackTrace();
-				log.info("异常：trader.trade(tradingOrders);");
-			}
+                trader.trade(tradingOrders);
+            } catch (ParseException e) {
+                e.printStackTrace();
+                log.info("异常：trader.trade(tradingOrders);");
+            }
             //判断已完成的订单发送消息通知
             if(completedOrders.size() > 0){
-            	log.info("Initialize: completedOrders total count( " + tradingOrders.size() + ")");
+                log.info("Initialize: completedOrders total count( " + tradingOrders.size() + ")");
                 kafkaTemplate.send("exchange-order-completed", JSON.toJSONString(completedOrders));
             }
             trader.setReady(true);
         });
     }
-
 }
