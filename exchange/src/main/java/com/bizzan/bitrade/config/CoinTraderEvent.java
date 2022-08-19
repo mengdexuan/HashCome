@@ -1,5 +1,7 @@
 package com.bizzan.bitrade.config;
 
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.PageUtil;
 import com.alibaba.fastjson.JSON;
 import com.bizzan.bitrade.Trader.CoinTrader;
 import com.bizzan.bitrade.Trader.CoinTraderFactory;
@@ -8,6 +10,7 @@ import com.bizzan.bitrade.entity.ExchangeOrderDetail;
 import com.bizzan.bitrade.service.ExchangeOrderDetailService;
 import com.bizzan.bitrade.service.ExchangeOrderService;
 
+import com.google.common.collect.Lists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,11 +22,9 @@ import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.Executor;
+import java.util.stream.Collectors;
 
 @Component
 public class CoinTraderEvent implements CommandLineRunner {
@@ -53,24 +54,48 @@ public class CoinTraderEvent implements CommandLineRunner {
             log.info("======CoinTrader Process: " + symbol + "======");
             List<ExchangeOrder> orders = exchangeOrderService.findAllTradingOrderBySymbol(symbol);
             log.info("Initialize: find all trading orders, total count( " + orders.size() + ")");
+
+            Map<String,ExchangeOrder> orderMap = new HashMap<>();
+            orders.stream().forEach(item->{
+                orderMap.put(item.getOrderId(),item);
+            });
+
             List<ExchangeOrder> tradingOrders = new ArrayList<>();
             List<ExchangeOrder> completedOrders = new ArrayList<>();
-            orders.forEach(order -> {
-                BigDecimal tradedAmount = BigDecimal.ZERO;
-                BigDecimal turnover = BigDecimal.ZERO;
-                List<ExchangeOrderDetail> details = exchangeOrderDetailService.findAllByOrderId(order.getOrderId());
 
-                for(ExchangeOrderDetail trade:details){
-                    tradedAmount = tradedAmount.add(trade.getAmount());
-                    turnover = turnover.add(trade.getAmount().multiply(trade.getPrice()));
-                }
-                order.setTradedAmount(tradedAmount);
-                order.setTurnover(turnover);
-                if(!order.isCompleted()){
-                    tradingOrders.add(order);
-                }
-                else{
-                    completedOrders.add(order);
+            List<List<ExchangeOrder>> pageList = Lists.partition(orders, 100);
+
+            for (List<ExchangeOrder> item:pageList){
+
+                List<String> orderIdList = item.stream().map(one -> {
+                    return one.getOrderId();
+                }).collect(Collectors.toList());
+
+                //每次查询 100 条
+                List<ExchangeOrderDetail> details = exchangeOrderDetailService.findAllByOrderIdIn(orderIdList);
+                Map<String, List<ExchangeOrderDetail>> map = details.stream().collect(Collectors.groupingBy(ExchangeOrderDetail::getOrderId));
+
+                for (Map.Entry<String, List<ExchangeOrderDetail>> entry:map.entrySet()){
+                    String key = entry.getKey();
+                    ExchangeOrder order = orderMap.get(key);
+
+                    List<ExchangeOrderDetail> val = entry.getValue();
+
+                    BigDecimal tradedAmount = BigDecimal.ZERO;
+                    BigDecimal turnover = BigDecimal.ZERO;
+
+                    for(ExchangeOrderDetail trade:val){
+                        tradedAmount = tradedAmount.add(trade.getAmount());
+                        turnover = turnover.add(trade.getAmount().multiply(trade.getPrice()));
+                    }
+                    order.setTradedAmount(tradedAmount);
+                    order.setTurnover(turnover);
+                    if(!order.isCompleted()){
+                        tradingOrders.add(order);
+                    }
+                    else{
+                        completedOrders.add(order);
+                    }
                 }
 
                 //间断一会再去查询 mongo
@@ -78,7 +103,9 @@ public class CoinTraderEvent implements CommandLineRunner {
                     Thread.sleep(10);
                 } catch (InterruptedException e) {
                 }
-            });
+            }
+            log.info("query mongo completed!");
+
             log.info("Initialize: tradingOrders total count( " + tradingOrders.size() + ")");
             try {
                 trader.trade(tradingOrders);

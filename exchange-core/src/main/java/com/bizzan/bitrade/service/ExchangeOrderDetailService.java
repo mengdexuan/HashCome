@@ -37,6 +37,17 @@ public class ExchangeOrderDetailService {
         return orderDetailRepository.findAllByOrderId(orderId);
     }
 
+
+    /**
+     * 查询某订单的成交详情
+     * @param orderIdList
+     * @return
+     */
+    public List<ExchangeOrderDetail> findAllByOrderIdIn(List<String> orderIdList){
+        return orderDetailRepository.findAllByOrderIdIn(orderIdList);
+    }
+
+
     public ExchangeOrderDetail save(ExchangeOrderDetail detail){
        return orderDetailRepository.save(detail);
     }
