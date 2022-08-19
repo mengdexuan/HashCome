@@ -136,6 +136,9 @@ public class ExchangeOrderService extends BaseService {
                 }
             }
         }
+        if (order.getType() == ExchangeOrderType.MARKET_PRICE) {
+            order.setPrice(BigDecimal.ZERO);
+        }
         order = exchangeOrderRepository.saveAndFlush(order);
         if (order != null) {
             return MessageResult.success("success");

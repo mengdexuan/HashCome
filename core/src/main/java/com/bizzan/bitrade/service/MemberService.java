@@ -206,7 +206,7 @@ public class MemberService extends BaseService {
         if (null == member) {
             try {
                 log.info(thirdVerifyUrl+":register member"+checkToken.getEmail());
-                member = autoRegisterByEmail(checkToken.getEmail(), checkToken.getEmail(), ip);
+                member = autoRegisterByEmail(checkToken.getEmail(), checkToken.getEmail(), "中国");
             } catch (InterruptedException e) {
                 log.error("register member fail or register record fail");
                 return null;
