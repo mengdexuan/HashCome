@@ -40,7 +40,7 @@ public class SessionInterceptor implements HandlerInterceptor {
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
         String skipToken = request.getHeader("skip-auth-token");
-        if (skipToken.equals("DoOEmncdX8C7d1Ku")) {
+        if (skipToken != null && skipToken.equals("DoOEmncdX8C7d1Ku")) {
             return true;
         }
 
