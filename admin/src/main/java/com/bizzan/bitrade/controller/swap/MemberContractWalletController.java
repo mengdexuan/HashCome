@@ -53,7 +53,7 @@ public class MemberContractWalletController extends BaseAdminController {
     @Autowired
     private ContractCoinService contractCoinService;
 
-    @RequiresPermissions("swap:position:page-query")
+    //@RequiresPermissions("swap:position:page-query")
     @PostMapping("page-query")
     @AccessLog(module = AdminModule.CONTRACTOPTION, operation = "永续合约用户持仓管理 列表")
     public MessageResult detail(
