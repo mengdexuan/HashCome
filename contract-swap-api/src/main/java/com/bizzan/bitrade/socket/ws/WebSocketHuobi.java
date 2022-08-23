@@ -206,7 +206,6 @@ public class WebSocketHuobi extends WebSocketClient {
                     String pong = jsonObject.toString();
                     send(pong.replace("ping", "pong"));
                 } else {
-
                     String id = "";
                     if(jsonObject.containsKey("topic")) {
                         id = jsonObject.getString("topic");
@@ -268,12 +267,12 @@ public class WebSocketHuobi extends WebSocketClient {
 
                                 // 推送K线(如果只有一条，说明是最新的K线，需要推送到前端K线)
                                 if(klineList.size() == 1) {
-                                    //logger.info("K线推送：" + kline.getPeriod() + " - " + symbol + " - " + kline.getTime());
+                                    logger.info("[WebSocketHuobi] K线推送：" + kline.getPeriod() + " - " + symbol + " - " + kline.getTime());
                                     exchangePushJob.pushTickKline(symbol, kline);
                                 }else if(klineList.size() > 1){
                                     // 推送最后一条数据
                                     if(i == klineList.size() - 1) {
-                                        //logger.info("K线推送：" + kline.getPeriod() + " - " + symbol + " - " + kline.getTime());
+                                        logger.info("[WebSocketHuobi] K线推送：" + kline.getPeriod() + " - " + symbol + " - " + kline.getTime());
                                         exchangePushJob.pushTickKline(symbol, kline);
                                     }
                                 }
@@ -309,7 +308,7 @@ public class WebSocketHuobi extends WebSocketClient {
                             // 刷新盘口数据
                             this.matchFactory.getContractCoinMatch(symbol).refreshPlate(buyItems, sellItems);
 
-                            //logger.info("[WebSocketHuobi] 盘口更新：bids共 {} 条，asks共 {} 条", bids.size(), asks.size());
+                            logger.info("[WebSocketHuobi] 盘口更新：bids共 {} 条，asks共 {} 条", bids.size(), asks.size());
                         }
                     }else if(type.equals("detail")){ // 市场行情概要
                         String tick = jsonObject.getString("tick");
@@ -335,10 +334,10 @@ public class WebSocketHuobi extends WebSocketClient {
 
                             // 委托触发 or 爆仓
                             this.matchFactory.getContractCoinMatch(symbol).refreshPrice(close, this.matchFactory);
-                            //logger.info("[WebSocketHuobi] 价格更新：{}", close);
+                            logger.info("[WebSocketHuobi] 价格更新：{}", close);
                         }
                     }else if(type.equals("trade")) { // 成交明细
-                        String tick = jsonObject.getString("data");
+                        String tick = jsonObject.getString("tick");
                         if (null != tick && !"".equals(tick) && JSONUtils.isJsonObject(tick)) {
                             JSONObject detailObj = JSONObject.parseObject(tick);
                             JSONArray tradeList = detailObj.getJSONArray("data");
@@ -371,8 +370,7 @@ public class WebSocketHuobi extends WebSocketClient {
                                 // 刷新成交记录
                                 this.matchFactory.getContractCoinMatch(symbol).refreshLastedTrade(tradeArrayList);
                             }
-
-                            //logger.info("[WebSocketHuobi] 成交明细更新：共 {} 条", tradeArrayList.size());
+                            logger.info("[WebSocketHuobi] 成交明细更新：共 {} 条", tradeArrayList.size());
                         }
                     }else if(type.equals("funding_rate")) { // 资金费率
                         String data = jsonObject.getString("data");

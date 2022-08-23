@@ -150,5 +150,9 @@ public class MemberContractWallet {
     @Transient
     private BigDecimal cnyRate = BigDecimal.valueOf(7L);
 
+    @Transient
+    private String email ;
 
+    @Transient
+    private String username ;
 }

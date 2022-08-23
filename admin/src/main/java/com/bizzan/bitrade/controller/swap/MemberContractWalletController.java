@@ -91,6 +91,12 @@ public class MemberContractWalletController extends BaseAdminController {
 
             // 设置CNY / USDT汇率
             wallet.setCnyRate(BigDecimal.valueOf(7));
+
+            Member member = memberService.findOne(wallet.getMemberId());
+            if (member != null) {
+                wallet.setEmail(member.getEmail());
+                wallet.setUsername(member.getUsername());
+            }
         }
         return success(all);
     }
