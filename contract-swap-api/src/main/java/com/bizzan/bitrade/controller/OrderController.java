@@ -127,9 +127,9 @@ public class OrderController {
 
         if (quantity != null) {
             if (type == ContractOrderType.LIMIT_PRICE || type == ContractOrderType.SPOT_LIMIT) {
-                if (entrustPrice != null) {
+                if (entrustPrice != null && entrustPrice.compareTo(BigDecimal.ZERO) > 0) {
                     usdtNum = quantity.multiply(entrustPrice);
-                } else if (triggerPrice != null) {
+                } else if (triggerPrice != null && triggerPrice.compareTo(BigDecimal.ZERO) > 0) {
                     usdtNum = quantity.multiply(triggerPrice);
                 }
             } else {
