@@ -944,7 +944,11 @@ public class OrderController {
         for(MemberContractWallet wallet: wallets) {
             ContractCoin coin = wallet.getContractCoin();
             // 计算账户权益
-            BigDecimal currentPrice = contractCoinMatchFactory.getContractCoinMatch(coin.getSymbol()).getNowPrice();
+            ContractCoinMatch match = contractCoinMatchFactory.getContractCoinMatch(coin.getSymbol());
+            if (match == null) {
+                continue;
+            }
+            BigDecimal currentPrice = match.getNowPrice();
             wallet.setCurrentPrice(currentPrice);
 
             // 计算金本位权益（多仓 + 空仓）
