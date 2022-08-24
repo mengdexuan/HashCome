@@ -308,7 +308,7 @@ public class WebSocketHuobi extends WebSocketClient {
                             // 刷新盘口数据
                             this.matchFactory.getContractCoinMatch(symbol).refreshPlate(buyItems, sellItems);
 
-                            logger.info("[WebSocketHuobi] 盘口更新：bids共 {} 条，asks共 {} 条", bids.size(), asks.size());
+                            logger.info("[WebSocketHuobi] 盘口更新：{} bids共 {} 条，asks共 {} 条", symbol, bids.size(), asks.size());
                         }
                     }else if(type.equals("detail")){ // 市场行情概要
                         String tick = jsonObject.getString("tick");
@@ -334,7 +334,7 @@ public class WebSocketHuobi extends WebSocketClient {
 
                             // 委托触发 or 爆仓
                             this.matchFactory.getContractCoinMatch(symbol).refreshPrice(close, this.matchFactory);
-                            logger.info("[WebSocketHuobi] 价格更新：{}", close);
+                            logger.info("[WebSocketHuobi] 价格更新：{} {}", symbol, close);
                         }
                     }else if(type.equals("trade")) { // 成交明细
                         String tick = jsonObject.getString("tick");
@@ -370,7 +370,7 @@ public class WebSocketHuobi extends WebSocketClient {
                                 // 刷新成交记录
                                 this.matchFactory.getContractCoinMatch(symbol).refreshLastedTrade(tradeArrayList);
                             }
-                            logger.info("[WebSocketHuobi] 成交明细更新：共 {} 条", tradeArrayList.size());
+                            logger.info("[WebSocketHuobi] 成交明细更新：{} 共 {} 条", symbol, tradeArrayList.size());
                         }
                     }else if(type.equals("funding_rate")) { // 资金费率
                         String data = jsonObject.getString("data");

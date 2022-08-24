@@ -607,7 +607,7 @@ public class ContractCoinMatch {
      * @param newPrice
      */
     public void processCloseSpotEntrustList(BigDecimal newPrice) {
-        logger.info("计划委托平仓处理开始：{}", newPrice);
+        logger.info("计划委托平仓处理开始：{} {}", symbol, newPrice);
         synchronized (closeOrderSpotList) {
             Iterator<ContractOrderEntrust> orderIterator = closeOrderSpotList.iterator();
 

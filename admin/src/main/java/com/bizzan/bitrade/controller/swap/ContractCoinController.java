@@ -1,5 +1,6 @@
 package com.bizzan.bitrade.controller.swap;
 
+import com.alibaba.fastjson.JSON;
 import com.bizzan.bitrade.annotation.AccessLog;
 import com.bizzan.bitrade.constant.AdminModule;
 import com.bizzan.bitrade.constant.BooleanEnum;
@@ -17,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Sort;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
@@ -36,6 +38,10 @@ public class ContractCoinController extends BaseAdminController implements Comma
 
     @Autowired
     JDBCUtils jdbcUtils;
+
+    @Autowired
+    private KafkaTemplate<String, String> kafkaTemplate;
+
     /**
      * 获取永续合约交易对列表
      * @param pageModel
@@ -94,6 +100,9 @@ public class ContractCoinController extends BaseAdminController implements Comma
         contractCoin.setTotalLoss(BigDecimal.ZERO);
         contractCoin.setTotalOpenFee(BigDecimal.ZERO);
         contractCoin = contractCoinService.save(contractCoin);
+
+        // 发送消息至Exchange系统
+        kafkaTemplate.send("add-contract-coin", JSON.toJSONString(contractCoin.getSymbol()));
         return MessageResult.getSuccessInstance("添加交易对成功！", contractCoin);
     }
 
