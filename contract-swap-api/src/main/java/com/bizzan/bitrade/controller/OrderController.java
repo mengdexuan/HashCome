@@ -891,6 +891,7 @@ public class OrderController {
             if (match == null) {
                 continue;
             }
+            BigDecimal currentPrice = match.getNowPrice();
             // 计算金本位权益（多仓 + 空仓）
             BigDecimal usdtTotalProfitAndLoss = BigDecimal.ZERO;
             // 多仓计算方法：（当前价格 / 开仓均价 - 1）* （可用仓位 + 冻结仓位） * 合约面值
