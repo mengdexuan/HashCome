@@ -745,7 +745,11 @@ public class ContractCoinMatch {
 
                    List<MemberContractWallet> items = memberContractWalletService.findAllByMemberId(wallet.getMemberId());
                    for (MemberContractWallet item:items) {
-                       BigDecimal nowPrice = matchFactory.getContractCoinMatch(item.getContractCoin().getSymbol()).getNowPrice();
+                       ContractCoinMatch match = matchFactory.getContractCoinMatch(item.getContractCoin().getSymbol());
+                       if (match == null) {
+                           continue;
+                       }
+                       BigDecimal nowPrice = match.getNowPrice();
                        // 计算多单收益
                        BigDecimal buyPL = BigDecimal.ZERO;
                        if(item.getUsdtBuyPrice().compareTo(BigDecimal.ZERO) > 0){
@@ -784,7 +788,11 @@ public class ContractCoinMatch {
                             logger.info("爆仓检查 - 保证金率："+curRate);
                             // 爆 多单 和 空单
                             for (MemberContractWallet item:items) {
-                                BigDecimal nowPrice = matchFactory.getContractCoinMatch(item.getContractCoin().getSymbol()).getNowPrice();
+                                ContractCoinMatch match = matchFactory.getContractCoinMatch(item.getContractCoin().getSymbol());
+                                if (match == null) {
+                                    continue;
+                                }
+                                BigDecimal nowPrice = match.getNowPrice();
                                 blastAll(item, nowPrice);
                             }
                             // 更新钱包
