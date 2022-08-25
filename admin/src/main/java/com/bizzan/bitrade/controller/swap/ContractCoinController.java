@@ -102,7 +102,7 @@ public class ContractCoinController extends BaseAdminController implements Comma
         contractCoin = contractCoinService.save(contractCoin);
 
         // 发送消息至Exchange系统
-        kafkaTemplate.send("add-contract-coin", JSON.toJSONString(contractCoin.getSymbol()));
+        kafkaTemplate.send("add-contract-coin", JSON.toJSONString(contractCoin));
         return MessageResult.getSuccessInstance("添加交易对成功！", contractCoin);
     }
 
@@ -197,6 +197,7 @@ public class ContractCoinController extends BaseAdminController implements Comma
         if(makerFee != null) coin.setMakerFee(makerFee);
 
         contractCoinService.save(coin);
+        kafkaTemplate.send("add-contract-coin", JSON.toJSONString(coin));
         return success("保存成功");
     }
 
