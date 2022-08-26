@@ -197,7 +197,7 @@ public class ContractCoinController extends BaseAdminController implements Comma
         if(makerFee != null) coin.setMakerFee(makerFee);
 
         contractCoinService.save(coin);
-        kafkaTemplate.send("add-contract-coin", JSON.toJSONString(coin));
+        kafkaTemplate.send("update-contract-coin", JSON.toJSONString(coin));
         return success("保存成功");
     }
 
