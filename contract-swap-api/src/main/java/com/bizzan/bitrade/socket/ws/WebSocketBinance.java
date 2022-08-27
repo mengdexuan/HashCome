@@ -238,7 +238,7 @@ public class WebSocketBinance extends WebSocketClient {
                     BigDecimal amount = klineObj.getBigDecimal("q"); // 收盘价
                     BigDecimal vol = klineObj.getBigDecimal("v"); // 收盘价
                     int count = klineObj.getIntValue("n"); // 收盘价
-                    long time = klineObj.getLongValue("E") / 1000;
+                    long time = klineObj.getLongValue("t") / 1000;
 
                     KLine kline = new KLine(convert(period));
                     kline.setClosePrice(close);
@@ -249,13 +249,12 @@ public class WebSocketBinance extends WebSocketClient {
                     kline.setTime(time);
                     kline.setTurnover(amount.multiply(BigDecimal.valueOf(VOLUME_PERCENT)));
                     kline.setVolume(vol.multiply(BigDecimal.valueOf(VOLUME_PERCENT)));
-                    marketService.saveKLine(symbol, kline);
+                    if(klineObj.getBoolean("x")) {
+                        marketService.saveKLine(symbol, kline);
+                    }
 
                     // 推送K线(如果只有一条，说明是最新的K线，需要推送到前端K线)
-                    if(klineObj.getBoolean("x")) {
-                        logger.info("[WebSocketBinance] K线推送：{} {}", symbol, kline.getPeriod());
-                        exchangePushJob.pushTickKline(symbol, kline);
-                    }
+                    exchangePushJob.pushTickKline(symbol, kline);
                 }else if(type.equals("depthUpdate")){
                     // 买盘深度
                     JSONArray bids = jsonObject.getJSONArray("b");
@@ -290,6 +289,7 @@ public class WebSocketBinance extends WebSocketClient {
                     BigDecimal vol = jsonObject.getBigDecimal("v");
 
                     CoinThumb thumb = new CoinThumb();
+                    thumb.setSymbol(symbol);
                     thumb.setOpen(open);
                     thumb.setClose(close);
                     thumb.setHigh(high);
@@ -424,7 +424,7 @@ public class WebSocketBinance extends WebSocketClient {
                 kline.setVolume(vol.multiply(BigDecimal.valueOf(VOLUME_PERCENT)));
                 marketService.saveKLine(symbol, kline);
             }
-            logger.info("[WebSocketBinance] K线同步：" + period + " - " + symbol + " - " + klineList.size());
+            logger.info("[WebSocketBinance] K线同步：{} {} {}", symbol, period,  klineList.size());
         }
         return resp.getStatus();
     }
