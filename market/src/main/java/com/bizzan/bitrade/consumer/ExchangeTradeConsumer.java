@@ -82,7 +82,7 @@ public class ExchangeTradeConsumer {
 
 					BigDecimal amount = BigDecimal.ZERO;
 					for (ExchangeOrderDetail item: order.getDetail()) {
-						 amount = amount.add(item.getTurnover().divide(item.getPrice(), exchangeCoinService.findBySymbol(symbol).getCoinScale(), BigDecimal.ROUND_DOWN));
+						 amount = amount.add(item.getTurnover());
 					}
 					if (order.getDirection() == ExchangeOrderDirection.BUY) {
 						if (order.getMemberId() != 1) {
