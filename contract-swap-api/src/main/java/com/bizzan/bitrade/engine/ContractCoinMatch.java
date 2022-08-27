@@ -628,6 +628,20 @@ public class ContractCoinMatch {
             logger.info("计划委托平仓处理订单列表, size: {}", closeOrderSpotList.size());
             while ((orderIterator.hasNext())) {
                 ContractOrderEntrust order = orderIterator.next();
+
+                MemberContractWallet wallet = memberContractWalletService.findByMemberIdAndContractCoin(order.getMemberId(), contractCoin);
+                if (order.getDirection() == ContractOrderDirection.BUY) {
+                   if (wallet.getUsdtSellPosition().compareTo(order.getVolume()) == 0) {
+                        orderIterator.remove();
+                        continue;
+                    }
+                } else {
+                    if (wallet.getUsdtBuyPosition().compareTo(order.getVolume()) == 0) {
+                        orderIterator.remove();
+                        continue;
+                    }
+                }
+
                 // 这里分为两种可能性计划委托
                 // 1、用户委托时，委托的触发价格大于当时的价格，到现在这个时候，触发价格小于行情价，说明价格涨到触发价，该触发了 （买入平空时相当于止损，卖出平多时相当于止盈）
                 // 2、用户委托时，委托的触发价格小于当时的价格，到现在这个时候，触发价格大于行情价，说明价格跌到触发价，该触发了 （买入平空时相当于止盈，卖出平多时相当于止损）
@@ -635,7 +649,7 @@ public class ContractCoinMatch {
                 if ((order.getTriggerPrice().compareTo(order.getCurrentPrice()) >= 0 && order.getTriggerPrice().compareTo(newPrice) <= 0)
                  || (order.getTriggerPrice().compareTo(order.getCurrentPrice()) <= 0 && order.getTriggerPrice().compareTo(newPrice) >= 0)) {
                     logger.info("触发计划：计划委托平仓处理. {} - {} - {}", order.getTriggerPrice(), order.getCurrentPrice(), newPrice);
-                    MemberContractWallet wallet = memberContractWalletService.findByMemberIdAndContractCoin(order.getMemberId(), contractCoin);
+                    // MemberContractWallet wallet = memberContractWalletService.findByMemberIdAndContractCoin(order.getMemberId(), contractCoin);
                     // 触发委托
                     if (order.getDirection() == ContractOrderDirection.BUY) { // 买入平空，检查空单持仓量是否足够
                         // 检查空单持仓量是否足够
