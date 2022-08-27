@@ -238,7 +238,7 @@ public class WebSocketBinance extends WebSocketClient {
                     BigDecimal amount = klineObj.getBigDecimal("q"); // 收盘价
                     BigDecimal vol = klineObj.getBigDecimal("v"); // 收盘价
                     int count = klineObj.getIntValue("n"); // 收盘价
-                    long time = klineObj.getLongValue("E");
+                    long time = klineObj.getLongValue("E") / 1000;
 
                     KLine kline = new KLine(convert(period));
                     kline.setClosePrice(close);
@@ -410,7 +410,7 @@ public class WebSocketBinance extends WebSocketClient {
                 BigDecimal amount = klineObj.getBigDecimal(7); // 收盘价
                 BigDecimal vol = klineObj.getBigDecimal(5); // 收盘价
                 int count = klineObj.getIntValue(8); // 收盘价
-                long time = klineObj.getLongValue(0);
+                long time = klineObj.getLongValue(0) / 1000;
 
 
                 KLine kline = new KLine(convert(period));
