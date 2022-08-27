@@ -80,17 +80,20 @@ public class ExchangeTradeConsumer {
 							"/topic/market/order-completed/" + symbol + "/" + order.getMemberId(), order);
 					nettyHandler.handleOrder(NettyCommand.PUSH_EXCHANGE_ORDER_COMPLETED, order);
 
-					BigDecimal amount = BigDecimal.ZERO;
-					for (ExchangeOrderDetail item: order.getDetail()) {
-						 amount = amount.add(item.getTurnover());
-					}
-					if (order.getDirection() == ExchangeOrderDirection.BUY) {
-						if (order.getMemberId() != 1) {
-							exchangeCoinService.increaseTotalBuy(symbol, amount);
+					List<ExchangeOrderDetail> details = order.getDetail();
+					if (details != null) {
+						BigDecimal amount = BigDecimal.ZERO;
+						for (ExchangeOrderDetail item: details) {
+							amount = amount.add(item.getTurnover());
 						}
-					} else {
-						if (order.getMemberId() != 1) {
-							exchangeCoinService.increaseTotalBuy(symbol, amount.negate());
+						if (order.getDirection() == ExchangeOrderDirection.BUY) {
+							if (order.getMemberId() != 1) {
+								exchangeCoinService.increaseTotalBuy(symbol, amount);
+							}
+						} else {
+							if (order.getMemberId() != 1) {
+								exchangeCoinService.increaseTotalBuy(symbol, amount.negate());
+							}
 						}
 					}
 				}
