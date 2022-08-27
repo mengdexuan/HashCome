@@ -99,6 +99,8 @@ public class ContractCoinController extends BaseAdminController implements Comma
         contractCoin.setTotalCloseFee(BigDecimal.ZERO);
         contractCoin.setTotalLoss(BigDecimal.ZERO);
         contractCoin.setTotalOpenFee(BigDecimal.ZERO);
+        contractCoin.setTotalBuy(BigDecimal.ZERO);
+        contractCoin.setTotalSell(BigDecimal.ZERO);
         contractCoin = contractCoinService.save(contractCoin);
 
         // 发送消息至Exchange系统

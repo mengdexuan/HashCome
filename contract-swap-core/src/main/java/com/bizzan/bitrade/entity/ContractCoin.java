@@ -104,6 +104,11 @@ public class ContractCoin {
     @Column(columnDefinition = "decimal(26,8) DEFAULT 0 comment '合约总平仓手续费'")
     private BigDecimal totalCloseFee;// 合约总平仓手续费
 
+    @Column(columnDefinition = "decimal(26,8) DEFAULT 0 comment '合约总多开仓'")
+    private BigDecimal totalBuy;// 合约总开仓多
+
+    @Column(columnDefinition = "decimal(26,8) DEFAULT 0 comment '合约总空开仓'")
+    private BigDecimal totalSell;// 合约总平仓空
     /**
      * 服务器当前市价戳
      */

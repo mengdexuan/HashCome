@@ -47,4 +47,13 @@ public interface ContractCoinRepository extends JpaRepository<ContractCoin, Long
     @Query("update ContractCoin coin set coin.totalCloseFee=coin.totalCloseFee+:closeFee where coin.id = :cid")
     void increaseCloseFee(@Param("cid")Long cid, @Param("closeFee")BigDecimal closeFee);
 
+    @Transactional(rollbackFor = Exception.class)
+    @Modifying
+    @Query("update ContractCoin coin set coin.totalBuy=coin.totalBuy+:amount where coin.id = :cid")
+    void increaseBuy(@Param("cid")Long cid, @Param("amount")BigDecimal amount);
+
+    @Transactional(rollbackFor = Exception.class)
+    @Modifying
+    @Query("update ContractCoin coin set coin.totalSell=coin.totalSell+:amount where coin.id = :cid")
+    void increaseSell(@Param("cid")Long cid, @Param("amount")BigDecimal amount);
 }
