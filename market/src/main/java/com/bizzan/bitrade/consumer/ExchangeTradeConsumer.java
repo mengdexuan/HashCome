@@ -1,5 +1,6 @@
 package com.bizzan.bitrade.consumer;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -7,6 +8,8 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
+import com.bizzan.bitrade.entity.*;
+import com.bizzan.bitrade.service.ExchangeCoinService;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,9 +21,6 @@ import org.springframework.stereotype.Component;
 
 import com.alibaba.fastjson.JSON;
 import com.bizzan.bitrade.constant.NettyCommand;
-import com.bizzan.bitrade.entity.ExchangeOrder;
-import com.bizzan.bitrade.entity.ExchangeTrade;
-import com.bizzan.bitrade.entity.TradePlate;
 import com.bizzan.bitrade.handler.NettyHandler;
 import com.bizzan.bitrade.job.ExchangePushJob;
 import com.bizzan.bitrade.processor.CoinProcessor;
@@ -39,6 +39,8 @@ public class ExchangeTradeConsumer {
 	private SimpMessagingTemplate messagingTemplate;
 	@Autowired
 	private ExchangeOrderService exchangeOrderService;
+	@Autowired
+	private ExchangeCoinService exchangeCoinService;
 	@Autowired
 	private NettyHandler nettyHandler;
 	@Value("${second.referrer.award}")
@@ -77,6 +79,20 @@ public class ExchangeTradeConsumer {
 					messagingTemplate.convertAndSend(
 							"/topic/market/order-completed/" + symbol + "/" + order.getMemberId(), order);
 					nettyHandler.handleOrder(NettyCommand.PUSH_EXCHANGE_ORDER_COMPLETED, order);
+
+					BigDecimal amount = BigDecimal.ZERO;
+					for (ExchangeOrderDetail item: order.getDetail()) {
+						 amount = amount.add(item.getTurnover().divide(item.getPrice(), exchangeCoinService.findBySymbol(symbol).getCoinScale(), BigDecimal.ROUND_DOWN));
+					}
+					if (order.getDirection() == ExchangeOrderDirection.BUY) {
+						if (order.getMemberId() != 1) {
+							exchangeCoinService.increaseTotalBuy(symbol, amount);
+						}
+					} else {
+						if (order.getMemberId() != 1) {
+							exchangeCoinService.increaseTotalBuy(symbol, amount.negate());
+						}
+					}
 				}
 			}
 		} catch (Exception e) {
