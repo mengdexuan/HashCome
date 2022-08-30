@@ -72,6 +72,7 @@ public class MarketController {
                 continue;
             }
             CoinThumb thumb = processor.getThumb();
+            thumb.setFeePercent(coin.getFeePercent());
             thumbs.add(thumb);
         }
         return thumbs;
