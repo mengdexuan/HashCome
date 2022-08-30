@@ -630,7 +630,7 @@ public class ContractCoinMatch {
                 ContractOrderEntrust order = orderIterator.next();
 
                 MemberContractWallet wallet = memberContractWalletService.findByMemberIdAndContractCoin(order.getMemberId(), contractCoin);
-                if (order.getDirection() == ContractOrderDirection.BUY) {
+                if (order.getDirection() == ContractOrderDirection.SELL) {
                    if (wallet.getUsdtSellPosition().compareTo(order.getVolume()) == 0) {
                         orderIterator.remove();
                         continue;
