@@ -23,4 +23,6 @@ public class CoinThumb {
     private BigDecimal baseUsdRate;
     //交易區
     private int zone;
+    // 资金费率(默认千分之一)
+    private BigDecimal feePercent;
 }
