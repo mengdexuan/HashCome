@@ -188,10 +188,10 @@ public class ContractCoinController extends BaseAdminController implements Comma
         if(minShare != null) coin.setMinShare(minShare);
         if(maxShare != null) coin.setMaxShare(maxShare);
         if(intervalHour != null) coin.setIntervalHour(intervalHour);
-        if(feePercent != null) {
-            coin.setFeePercent(feePercent);
-            setFeePercent(coin.getSymbol(),feePercent);
-        }
+//        if(feePercent != null) {
+//            coin.setFeePercent(feePercent);
+//            setFeePercent(coin.getSymbol(),feePercent);
+//        }
         if(maintenanceMarginRate != null) coin.setMaintenanceMarginRate(maintenanceMarginRate);
         if(openFee != null) coin.setOpenFee(openFee);
         if(closeFee != null) coin.setCloseFee(closeFee);
