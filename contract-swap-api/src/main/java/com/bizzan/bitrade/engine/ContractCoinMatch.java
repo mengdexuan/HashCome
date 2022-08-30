@@ -632,12 +632,16 @@ public class ContractCoinMatch {
                 MemberContractWallet wallet = memberContractWalletService.findByMemberIdAndContractCoin(order.getMemberId(), contractCoin);
                 if (order.getDirection() == ContractOrderDirection.BUY) {
                    if (wallet.getUsdtSellPosition().compareTo(order.getVolume()) < 0) {
-                        orderIterator.remove();
-                        continue;
+                       orderIterator.remove();
+                       order.setStatus(ContractOrderEntrustStatus.ENTRUST_CANCEL);
+                       contractOrderEntrustService.save(order);
+                       continue;
                     }
                 } else {
                     if (wallet.getUsdtBuyPosition().compareTo(order.getVolume()) < 0) {
                         orderIterator.remove();
+                        order.setStatus(ContractOrderEntrustStatus.ENTRUST_CANCEL);
+                        contractOrderEntrustService.save(order);
                         continue;
                     }
                 }
