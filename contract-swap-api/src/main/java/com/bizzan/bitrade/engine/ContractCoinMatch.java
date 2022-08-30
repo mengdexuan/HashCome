@@ -630,13 +630,13 @@ public class ContractCoinMatch {
                 ContractOrderEntrust order = orderIterator.next();
 
                 MemberContractWallet wallet = memberContractWalletService.findByMemberIdAndContractCoin(order.getMemberId(), contractCoin);
-                if (order.getDirection() == ContractOrderDirection.SELL) {
-                   if (wallet.getUsdtSellPosition().compareTo(order.getVolume()) == 0) {
+                if (order.getDirection() == ContractOrderDirection.BUY) {
+                   if (wallet.getUsdtSellPosition().compareTo(order.getVolume()) < 0) {
                         orderIterator.remove();
                         continue;
                     }
                 } else {
-                    if (wallet.getUsdtBuyPosition().compareTo(order.getVolume()) == 0) {
+                    if (wallet.getUsdtBuyPosition().compareTo(order.getVolume()) < 0) {
                         orderIterator.remove();
                         continue;
                     }
