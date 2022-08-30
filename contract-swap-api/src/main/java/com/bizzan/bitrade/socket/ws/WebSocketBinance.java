@@ -73,43 +73,45 @@ public class WebSocketBinance extends WebSocketClient {
                     subCoinList.add(symbol);
                 }
 
-                // 同步k线数据
-                syncKline(symbol.replace("/", "").toLowerCase());
+                new Thread(()->{
+                    // 同步k线数据
+                    syncKline(symbol.replace("/", "").toLowerCase());
 
-                List<String> params = new ArrayList<>();
-                // 订阅深度
-                String depthTopic = String.format(DEPTH, symbol.replace("/", "").toLowerCase());
+                    List<String> params = new ArrayList<>();
+                    // 订阅深度
+                    String depthTopic = String.format(DEPTH, symbol.replace("/", "").toLowerCase());
 //                logger.info("[WebSocketBinance][" + symbol + "] 深度订阅: " + depthTopic);
 //                sendWS("SUBSCRIBE", depthTopic);
-                params.add(depthTopic);
+                    params.add(depthTopic);
 
-                // 订阅市场概要
-                String detailTopic = String.format(DETAIL, symbol.replace("/", "").toLowerCase());
+                    // 订阅市场概要
+                    String detailTopic = String.format(DETAIL, symbol.replace("/", "").toLowerCase());
 //                logger.info("[WebSocketBinance][" + symbol + "] 概要订阅: " + detailTopic);
 //                sendWS("SUBSCRIBE", detailTopic);
-                params.add(detailTopic);
+                    params.add(detailTopic);
 
-                // 订阅成交明细
-                String tradeTopic = String.format(TRADE, symbol.replace("/", "").toLowerCase());
+                    // 订阅成交明细
+                    String tradeTopic = String.format(TRADE, symbol.replace("/", "").toLowerCase());
 //                logger.info("[WebSocketBinance][" + symbol + "] 成交明细订阅: " + tradeTopic);
 //                sendWS("SUBSCRIBE", tradeTopic);
-                params.add(tradeTopic);
+                    params.add(tradeTopic);
 
-                // 订阅资金费率
-                String foundTopic = String.format(FOUNDRATE, symbol.replace("/", "").toLowerCase());
+                    // 订阅资金费率
+                    String foundTopic = String.format(FOUNDRATE, symbol.replace("/", "").toLowerCase());
 //                logger.info("[WebSocketBinance][" + symbol + "] 资金费率订阅: " + foundTopic);
 //                sendWS("SUBSCRIBE", foundTopic);
-                params.add(foundTopic);
+                    params.add(foundTopic);
 
-                // 订阅实时K线
-                for(String period : PERIOD) {
-                    String klineTopic = String.format(KLINE, symbol.replace("/", "").toLowerCase(), period);
+                    // 订阅实时K线
+                    for(String period : PERIOD) {
+                        String klineTopic = String.format(KLINE, symbol.replace("/", "").toLowerCase(), period);
 //                    logger.info("[WebSocketBinance][" + symbol + "] 实时K线订阅: " + klineTopic);
 //                    sendWS("SUBSCRIBE", klineTopic);
-                    params.add(klineTopic);
-                }
-                sendWS("SUBSCRIBE", params);
-                logger.info("[WebSocketBinance][" + symbol + "] 订阅: " + params);
+                        params.add(klineTopic);
+                    }
+                    sendWS("SUBSCRIBE", params);
+                    logger.info("[WebSocketBinance][" + symbol + "] 订阅: " + params);
+                }).start();
             }
         }
     }
