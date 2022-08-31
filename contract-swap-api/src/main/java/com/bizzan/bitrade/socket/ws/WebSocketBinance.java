@@ -75,6 +75,7 @@ public class WebSocketBinance extends WebSocketClient {
 
                 new Thread(()->{
                     // 同步k线数据
+                    logger.info("[WebSocketBinance][" + symbol + "] 同步K线");
                     syncKline(symbol.replace("/", "").toLowerCase());
 
                     List<String> params = new ArrayList<>();
@@ -399,7 +400,7 @@ public class WebSocketBinance extends WebSocketClient {
     private Integer sendKline(String symbol, String period, long from, long to) throws UnirestException {
         String url = String.format("https://fapi.binance.com/fapi/v1/klines?symbol=%s&interval=%s&startTime=%s&endTime=%s", symbol, period, from, to);
         HttpResponse<JsonNode> resp = Unirest.get(url).asJson();
-        logger.info("sendKline {} {}", url, resp);
+        logger.info("sendKline {} {}", url, resp.getStatus());
         if(resp.getStatus() == 200) { //正确返回
             JSONArray klineList = JSON.parseArray(resp.getBody().toString());
             for(int i = 0; i < klineList.size(); i++) {
