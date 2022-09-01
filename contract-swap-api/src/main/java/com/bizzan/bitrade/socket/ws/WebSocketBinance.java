@@ -76,7 +76,6 @@ public class WebSocketBinance extends WebSocketClient {
                 Runnable sendable = new Runnable() {
                     @Override
                     public void run() {
-                        logger.info("[WebSocketBinance] 开启重新连接");
                         // 同步k线数据
                         logger.info("[WebSocketBinance][" + symbol + "] 同步K线");
                         syncKline(symbol.replace("/", "").toLowerCase());

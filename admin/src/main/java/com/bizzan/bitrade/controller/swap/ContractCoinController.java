@@ -130,6 +130,8 @@ public class ContractCoinController extends BaseAdminController implements Comma
      * @param intervalHour
      * @param feePercent
      * @param maintenanceMarginRate
+     * @param baseScale
+     * @param coinScale
      * @param openFee
      * @param closeFee
      * @param takerFee
@@ -161,6 +163,8 @@ public class ContractCoinController extends BaseAdminController implements Comma
             @RequestParam(value = "intervalHour", required = false) Integer intervalHour,
             @RequestParam(value = "feePercent", required = false) BigDecimal feePercent,
             @RequestParam(value = "maintenanceMarginRate", required = false) BigDecimal maintenanceMarginRate,
+            @RequestParam(value = "baseScale", required = false) Integer baseScale,
+            @RequestParam(value = "coinScale", required = false) Integer coinScale,
             @RequestParam(value = "openFee", required = false) BigDecimal openFee,
             @RequestParam(value = "closeFee", required = false) BigDecimal closeFee,
             @RequestParam(value = "takerFee", required = false) BigDecimal takerFee,
@@ -187,6 +191,8 @@ public class ContractCoinController extends BaseAdminController implements Comma
         if(leverage != null) coin.setLeverage(leverage);
         if(minShare != null) coin.setMinShare(minShare);
         if(maxShare != null) coin.setMaxShare(maxShare);
+        if(baseScale != null) coin.setBaseCoinScale(baseScale);
+        if(coinScale != null) coin.setCoinScale(coinScale);
         if(intervalHour != null) coin.setIntervalHour(intervalHour);
 //        if(feePercent != null) {
 //            coin.setFeePercent(feePercent);
