@@ -53,7 +53,7 @@ public class MemberContractWalletController extends BaseAdminController {
     @Autowired
     private ContractCoinService contractCoinService;
 
-    @RequiresPermissions("swap:position:page-query")
+    //@RequiresPermissions("swap:position:page-query")
     @PostMapping("page-query")
     @AccessLog(module = AdminModule.CONTRACTOPTION, operation = "永续合约用户持仓管理 列表")
     public MessageResult detail(
@@ -91,6 +91,12 @@ public class MemberContractWalletController extends BaseAdminController {
 
             // 设置CNY / USDT汇率
             wallet.setCnyRate(BigDecimal.valueOf(7));
+
+            Member member = memberService.findOne(wallet.getMemberId());
+            if (member != null) {
+                wallet.setEmail(member.getEmail());
+                wallet.setUsername(member.getUsername());
+            }
         }
         return success(all);
     }

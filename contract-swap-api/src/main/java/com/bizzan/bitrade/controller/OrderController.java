@@ -3,6 +3,7 @@ package com.bizzan.bitrade.controller;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.bizzan.bitrade.constant.BooleanEnum;
+import com.bizzan.bitrade.engine.ContractCoinMatch;
 import com.bizzan.bitrade.engine.ContractCoinMatchFactory;
 import com.bizzan.bitrade.entity.*;
 import com.bizzan.bitrade.entity.transform.AuthMember;
@@ -127,9 +128,9 @@ public class OrderController {
 
         if (quantity != null) {
             if (type == ContractOrderType.LIMIT_PRICE || type == ContractOrderType.SPOT_LIMIT) {
-                if (entrustPrice != null) {
+                if (entrustPrice != null && entrustPrice.compareTo(BigDecimal.ZERO) > 0) {
                     usdtNum = quantity.multiply(entrustPrice);
-                } else if (triggerPrice != null) {
+                } else if (triggerPrice != null && triggerPrice.compareTo(BigDecimal.ZERO) > 0) {
                     usdtNum = quantity.multiply(triggerPrice);
                 }
             } else {
@@ -309,7 +310,7 @@ public class OrderController {
 
             // 空仓计算方法：（1 - 当前价格 / 开仓均价）* （可用仓位 + 冻结仓位） * 合约面值
             if (memberContractWallet.getUsdtSellPrice().compareTo(BigDecimal.ZERO) > 0 && memberContractWallet.getUsdtSellPosition().compareTo(BigDecimal.ZERO) > 0) {
-                usdtTotalProfitAndLoss = usdtTotalProfitAndLoss.add(BigDecimal.ONE.subtract(currentPrice.divide(memberContractWallet.getUsdtSellPrice(), 4, BigDecimal.ROUND_DOWN)).multiply(memberContractWallet.getUsdtSellPosition().add(memberContractWallet.getUsdtFrozenSellPosition())).multiply(memberContractWallet.getUsdtShareNumber()));
+                usdtTotalProfitAndLoss = usdtTotalProfitAndLoss.add(BigDecimal.ONE.subtract(currentPrice.divide(memberContractWallet.getUsdtSellPrice(), 8, BigDecimal.ROUND_DOWN)).multiply(memberContractWallet.getUsdtSellPosition().add(memberContractWallet.getUsdtFrozenSellPosition())).multiply(memberContractWallet.getUsdtShareNumber()));
             }
 
             // 加上仓位保证金
@@ -886,17 +887,21 @@ public class OrderController {
 
         // 计算账户权益
         for (MemberContractWallet wallet : list) {
-            BigDecimal currentPrice = contractCoinMatchFactory.getContractCoinMatch(wallet.getContractCoin().getSymbol()).getNowPrice();
+            ContractCoinMatch match = contractCoinMatchFactory.getContractCoinMatch(wallet.getContractCoin().getSymbol());
+            if (match == null) {
+                continue;
+            }
+            BigDecimal currentPrice = match.getNowPrice();
             // 计算金本位权益（多仓 + 空仓）
             BigDecimal usdtTotalProfitAndLoss = BigDecimal.ZERO;
             // 多仓计算方法：（当前价格 / 开仓均价 - 1）* （可用仓位 + 冻结仓位） * 合约面值
             if (wallet.getUsdtBuyPrice().compareTo(BigDecimal.ZERO) > 0) {
-                usdtTotalProfitAndLoss = usdtTotalProfitAndLoss.add(currentPrice.divide(wallet.getUsdtBuyPrice(), 4, BigDecimal.ROUND_DOWN).subtract(BigDecimal.ONE).multiply(wallet.getUsdtBuyPosition().add(wallet.getUsdtFrozenBuyPosition())).multiply(wallet.getUsdtShareNumber()));
+                usdtTotalProfitAndLoss = usdtTotalProfitAndLoss.add(currentPrice.divide(wallet.getUsdtBuyPrice(), 8, BigDecimal.ROUND_DOWN).subtract(BigDecimal.ONE).multiply(wallet.getUsdtBuyPosition().add(wallet.getUsdtFrozenBuyPosition())).multiply(wallet.getUsdtShareNumber()));
             }
 
             // 空仓计算方法：（1 - 当前价格 / 开仓均价）* （可用仓位 + 冻结仓位） * 合约面值
             if (wallet.getUsdtSellPrice().compareTo(BigDecimal.ZERO) > 0) {
-                usdtTotalProfitAndLoss = usdtTotalProfitAndLoss.add(BigDecimal.ONE.subtract(currentPrice.divide(wallet.getUsdtSellPrice(), 4, BigDecimal.ROUND_DOWN)).multiply(wallet.getUsdtSellPosition().add(wallet.getUsdtFrozenSellPosition())).multiply(wallet.getUsdtShareNumber()));
+                usdtTotalProfitAndLoss = usdtTotalProfitAndLoss.add(BigDecimal.ONE.subtract(currentPrice.divide(wallet.getUsdtSellPrice(), 8, BigDecimal.ROUND_DOWN)).multiply(wallet.getUsdtSellPosition().add(wallet.getUsdtFrozenSellPosition())).multiply(wallet.getUsdtShareNumber()));
             }
 
             wallet.setUsdtTotalProfitAndLoss(usdtTotalProfitAndLoss);
@@ -939,18 +944,22 @@ public class OrderController {
         for(MemberContractWallet wallet: wallets) {
             ContractCoin coin = wallet.getContractCoin();
             // 计算账户权益
-            BigDecimal currentPrice = contractCoinMatchFactory.getContractCoinMatch(coin.getSymbol()).getNowPrice();
+            ContractCoinMatch match = contractCoinMatchFactory.getContractCoinMatch(coin.getSymbol());
+            if (match == null) {
+                continue;
+            }
+            BigDecimal currentPrice = match.getNowPrice();
             wallet.setCurrentPrice(currentPrice);
 
             // 计算金本位权益（多仓 + 空仓）
             BigDecimal usdtTotalProfitAndLoss = BigDecimal.ZERO;
             // 多仓计算方法：（当前价格 / 开仓均价 - 1）* （可用仓位 + 冻结仓位） * 合约面值
             if (wallet.getUsdtBuyPrice().compareTo(BigDecimal.ZERO) > 0) {
-                usdtTotalProfitAndLoss = usdtTotalProfitAndLoss.add(currentPrice.divide(wallet.getUsdtBuyPrice(), 4, BigDecimal.ROUND_DOWN).subtract(BigDecimal.ONE).multiply(wallet.getUsdtBuyPosition().add(wallet.getUsdtFrozenBuyPosition())).multiply(wallet.getUsdtShareNumber()));
+                usdtTotalProfitAndLoss = usdtTotalProfitAndLoss.add(currentPrice.divide(wallet.getUsdtBuyPrice(), 8, BigDecimal.ROUND_DOWN).subtract(BigDecimal.ONE).multiply(wallet.getUsdtBuyPosition().add(wallet.getUsdtFrozenBuyPosition())).multiply(wallet.getUsdtShareNumber()));
             }
             // 空仓计算方法：（1 - 当前价格 / 开仓均价）* （可用仓位 + 冻结仓位） * 合约面值
             if (wallet.getUsdtSellPrice().compareTo(BigDecimal.ZERO) > 0) {
-                usdtTotalProfitAndLoss = usdtTotalProfitAndLoss.add(BigDecimal.ONE.subtract(currentPrice.divide(wallet.getUsdtSellPrice(), 4, BigDecimal.ROUND_DOWN)).multiply(wallet.getUsdtSellPosition().add(wallet.getUsdtFrozenSellPosition())).multiply(wallet.getUsdtShareNumber()));
+                usdtTotalProfitAndLoss = usdtTotalProfitAndLoss.add(BigDecimal.ONE.subtract(currentPrice.divide(wallet.getUsdtSellPrice(), 8, BigDecimal.ROUND_DOWN)).multiply(wallet.getUsdtSellPosition().add(wallet.getUsdtFrozenSellPosition())).multiply(wallet.getUsdtShareNumber()));
             }
 
             wallet.setUsdtTotalProfitAndLoss(usdtTotalProfitAndLoss);

@@ -160,10 +160,16 @@ public class ContractCoinMatch {
 
         // 做多：扣除保证金 到 多仓保证金账户（冻结余额也减少）
         if (order.getDirection() == ContractOrderDirection.BUY) {
+            if (order.getMemberId() != 1) {
+                contractCoinService.increaseTotalBuy(contractCoin.getId(), order.getVolume());
+            }
             memberContractWalletService.increaseUsdtBuyPrincipalAmountWithFrozen(memberContractWallet.getId(), order.getPrincipalAmount());
         }
         // 做空：扣除保证金 到 空仓保证金账户（可用余额也减少）
         if (order.getDirection() == ContractOrderDirection.SELL) {
+            if (order.getMemberId() != 1) {
+                contractCoinService.increaseTotalSell(contractCoin.getId(), order.getVolume());
+            }
             memberContractWalletService.increaseUsdtSellPrincipalAmountWithFrozen(memberContractWallet.getId(), order.getPrincipalAmount());
         }
         // 计算开仓价（滑点 > 市价用）
@@ -225,12 +231,20 @@ public class ContractCoinMatch {
         // 计算滑点成交价（市价下单时用此价格）
         BigDecimal dealPrice = nowPrice;
         if (order.getDirection() == ContractOrderDirection.BUY) { // 买入平空，滑点计算，更低价格
+            if (order.getMemberId() != 1) {
+                contractCoinService.increaseTotalSell(contractCoin.getId(), order.getVolume().negate());
+            }
+
             if (contractCoin.getSpreadType() == 1) { // 滑点类型：百分比
                 dealPrice = nowPrice.add(nowPrice.multiply(contractCoin.getSpread())); // 已当前价成交（或滑点价成交）
             } else { // 滑点类型：固定额
                 dealPrice = nowPrice.add(contractCoin.getSpread());
             }
         } else { // 卖出，滑点计算，做空，更低价格成交
+            if (order.getMemberId() != 1) {
+                contractCoinService.increaseTotalBuy(contractCoin.getId(), order.getVolume().negate());
+            }
+
             if (contractCoin.getSpreadType() == 1) { // 滑点类型：百分比
                 dealPrice = nowPrice.subtract(nowPrice.multiply(contractCoin.getSpread())); // 已当前价成交（或滑点价成交）
             } else { // 滑点类型：固定额
@@ -607,13 +621,31 @@ public class ContractCoinMatch {
      * @param newPrice
      */
     public void processCloseSpotEntrustList(BigDecimal newPrice) {
-        logger.info("计划委托平仓处理开始：{}", newPrice);
+        logger.info("计划委托平仓处理开始：{} {}", symbol, newPrice);
         synchronized (closeOrderSpotList) {
             Iterator<ContractOrderEntrust> orderIterator = closeOrderSpotList.iterator();
 
             logger.info("计划委托平仓处理订单列表, size: {}", closeOrderSpotList.size());
             while ((orderIterator.hasNext())) {
                 ContractOrderEntrust order = orderIterator.next();
+
+                MemberContractWallet wallet = memberContractWalletService.findByMemberIdAndContractCoin(order.getMemberId(), contractCoin);
+                if (order.getDirection() == ContractOrderDirection.BUY) {
+                   if (wallet.getUsdtSellPosition().compareTo(order.getVolume()) < 0) {
+                       orderIterator.remove();
+                       order.setStatus(ContractOrderEntrustStatus.ENTRUST_CANCEL);
+                       contractOrderEntrustService.save(order);
+                       continue;
+                    }
+                } else {
+                    if (wallet.getUsdtBuyPosition().compareTo(order.getVolume()) < 0) {
+                        orderIterator.remove();
+                        order.setStatus(ContractOrderEntrustStatus.ENTRUST_CANCEL);
+                        contractOrderEntrustService.save(order);
+                        continue;
+                    }
+                }
+
                 // 这里分为两种可能性计划委托
                 // 1、用户委托时，委托的触发价格大于当时的价格，到现在这个时候，触发价格小于行情价，说明价格涨到触发价，该触发了 （买入平空时相当于止损，卖出平多时相当于止盈）
                 // 2、用户委托时，委托的触发价格小于当时的价格，到现在这个时候，触发价格大于行情价，说明价格跌到触发价，该触发了 （买入平空时相当于止盈，卖出平多时相当于止损）
@@ -621,7 +653,7 @@ public class ContractCoinMatch {
                 if ((order.getTriggerPrice().compareTo(order.getCurrentPrice()) >= 0 && order.getTriggerPrice().compareTo(newPrice) <= 0)
                  || (order.getTriggerPrice().compareTo(order.getCurrentPrice()) <= 0 && order.getTriggerPrice().compareTo(newPrice) >= 0)) {
                     logger.info("触发计划：计划委托平仓处理. {} - {} - {}", order.getTriggerPrice(), order.getCurrentPrice(), newPrice);
-                    MemberContractWallet wallet = memberContractWalletService.findByMemberIdAndContractCoin(order.getMemberId(), contractCoin);
+                    // MemberContractWallet wallet = memberContractWalletService.findByMemberIdAndContractCoin(order.getMemberId(), contractCoin);
                     // 触发委托
                     if (order.getDirection() == ContractOrderDirection.BUY) { // 买入平空，检查空单持仓量是否足够
                         // 检查空单持仓量是否足够
@@ -745,7 +777,11 @@ public class ContractCoinMatch {
 
                    List<MemberContractWallet> items = memberContractWalletService.findAllByMemberId(wallet.getMemberId());
                    for (MemberContractWallet item:items) {
-                       BigDecimal nowPrice = matchFactory.getContractCoinMatch(item.getContractCoin().getSymbol()).getNowPrice();
+                       ContractCoinMatch match = matchFactory.getContractCoinMatch(item.getContractCoin().getSymbol());
+                       if (match == null) {
+                           continue;
+                       }
+                       BigDecimal nowPrice = match.getNowPrice();
                        // 计算多单收益
                        BigDecimal buyPL = BigDecimal.ZERO;
                        if(item.getUsdtBuyPrice().compareTo(BigDecimal.ZERO) > 0){
@@ -784,7 +820,11 @@ public class ContractCoinMatch {
                             logger.info("爆仓检查 - 保证金率："+curRate);
                             // 爆 多单 和 空单
                             for (MemberContractWallet item:items) {
-                                BigDecimal nowPrice = matchFactory.getContractCoinMatch(item.getContractCoin().getSymbol()).getNowPrice();
+                                ContractCoinMatch match = matchFactory.getContractCoinMatch(item.getContractCoin().getSymbol());
+                                if (match == null) {
+                                    continue;
+                                }
+                                BigDecimal nowPrice = match.getNowPrice();
                                 blastAll(item, nowPrice);
                             }
                             // 更新钱包
@@ -834,6 +874,12 @@ public class ContractCoinMatch {
             ContractOrderEntrust retObj = contractOrderEntrustService.save(orderEntrust);
             if (retObj != null) {
                 logger.info("多仓，清空仓位");
+
+                // 更新总多仓位
+                if (wallet.getMemberId() != 1) {
+                    contractCoinService.increaseTotalBuy(contractCoin.getId(), orderEntrust.getVolume().negate());
+                }
+
                 // 更新平台收益
                 contractCoinService.increaseTotalProfit(contractCoin.getId(), wallet.getUsdtBuyPrincipalAmount());
 
@@ -895,6 +941,12 @@ public class ContractCoinMatch {
             ContractOrderEntrust retObj = contractOrderEntrustService.save(orderEntrust);
             if (retObj != null) {
                 logger.info("空仓，清空仓位");
+
+                // 更新总空仓位
+                if (wallet.getMemberId() != 1) {
+                    contractCoinService.increaseTotalSell(contractCoin.getId(), orderEntrust.getVolume().negate());
+                }
+
                 // 更新平台收益
                 contractCoinService.increaseTotalProfit(contractCoin.getId(), wallet.getUsdtSellPrincipalAmount());
                 // 统一处理用户盈亏

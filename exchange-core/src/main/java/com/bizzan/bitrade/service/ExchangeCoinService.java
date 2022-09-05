@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.criteria.Path;
+import java.math.BigDecimal;
 import java.util.List;
 
 @Service
@@ -45,7 +46,7 @@ public class ExchangeCoinService {
         Sort sort = new Sort(order);
         return coinRepository.findAll(spec, sort);
     }
-    
+
     public List<ExchangeCoin> findAllByRobotType(int robotType) {
         Specification<ExchangeCoin> spec = (root, criteriaQuery, criteriaBuilder) -> {
             Path<String> visible = root.get("visible");
@@ -58,7 +59,7 @@ public class ExchangeCoinService {
         Sort sort = new Sort(order);
         return coinRepository.findAll(spec, sort);
     }
-    
+
     public List<ExchangeCoin> findAllByFlag(int flag) {
         Specification<ExchangeCoin> spec = (root, criteriaQuery, criteriaBuilder) -> {
             Path<String> enable = root.get("enable");
@@ -121,4 +122,7 @@ public class ExchangeCoinService {
         return coinRepository.findAllCoinSymbol();
     }
 
+    public void increaseTotalBuy(String symbol, BigDecimal amount) {
+        coinRepository.increaseBuy(symbol, amount);
+    }
 }

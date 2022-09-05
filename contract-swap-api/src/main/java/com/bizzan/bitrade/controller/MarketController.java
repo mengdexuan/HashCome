@@ -68,7 +68,11 @@ public class MarketController {
         List<CoinThumb> thumbs = new ArrayList<>();
         for(ContractCoin coin:coins){
             ContractCoinMatch processor = contractCoinMatchFactory.getContractCoinMatch(coin.getSymbol());
+            if (processor == null) {
+                continue;
+            }
             CoinThumb thumb = processor.getThumb();
+            thumb.setFeePercent(coin.getFeePercent());
             thumbs.add(thumb);
         }
         return thumbs;

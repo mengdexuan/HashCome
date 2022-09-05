@@ -94,7 +94,7 @@ public class FundingRateJob {
         BigDecimal usdtFrozenSellPosition = wallet.getUsdtFrozenSellPosition();
 
         if (usdtBuyPosition.add(usdtFrozenBuyPosition).compareTo(BigDecimal.valueOf(0)) > 0){
-            BigDecimal rate = getRate(wallet);
+            BigDecimal rate = wallet.getContractCoin().getFeePercent();
 
             //多单
 //            多仓价值 (B2+B3)*C1/C2

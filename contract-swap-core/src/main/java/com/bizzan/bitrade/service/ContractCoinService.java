@@ -114,4 +114,12 @@ public class ContractCoinService  extends BaseService {
     public void increaseTotalCloseFee(Long id, BigDecimal amount) {
         coinRepository.increaseCloseFee(id, amount);
     }
+
+    public void increaseTotalBuy(Long id, BigDecimal amount) {
+        coinRepository.increaseBuy(id, amount);
+    }
+
+    public void increaseTotalSell(Long id, BigDecimal amount) {
+        coinRepository.increaseSell(id, amount);
+    }
 }

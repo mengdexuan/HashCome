@@ -9,6 +9,7 @@ import com.bizzan.bitrade.handler.NettyHandler;
 import com.bizzan.bitrade.handler.WebsocketMarketHandler;
 import com.bizzan.bitrade.job.ExchangePushJob;
 import com.bizzan.bitrade.service.*;
+import com.bizzan.bitrade.socket.client.WsClientBinance;
 import com.bizzan.bitrade.socket.client.WsClientHuobi;
 import com.bizzan.bitrade.util.WebSocketConnectionManage;
 import org.slf4j.Logger;
@@ -83,7 +84,7 @@ public class ContractCoinMatchStarter implements ApplicationListener<ContextRefr
         // 设置WebSocket
         WebSocketConnectionManage.setClient(client);
 
-        WsClientHuobi w = new WsClientHuobi(factory);
+        WsClientBinance w = new WsClientBinance(factory);
         w.setContractCoinService(contractCoinService);
         w.setContractMarketService(marketService);
         w.setExchangePushJob(exchangePushJob);

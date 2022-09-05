@@ -232,7 +232,7 @@ public class JDBCUtils {
         Statement state = null;
         ResultSet rs = null;
         String sql = " INSERT INTO member_wallet( address, balance, frozen_balance, is_lock, member_id, version, coin_id, to_released )" +
-                " VALUES ( \"\", 0, 0, 0, ?, 0, ?, 0) ";
+                " VALUES ( \"\", ?, 0, 0, ?, 0, ?, 0) ";
 
         try {
 
@@ -258,8 +258,13 @@ public class JDBCUtils {
 
                 log.info("sql>>>>"+sql);
                 log.info("会员id>>>>>"+rs.getLong("id")+">>>>币种>>>"+coinId);
-                stmt.setLong(1, rs.getLong("id"));
-                stmt.setString(2, coinId);
+                if (rs.getLong("id") == 1) {
+                    stmt.setLong(1, 100000000);
+                } else {
+                    stmt.setLong(1, 0);
+                }
+                stmt.setLong(2, rs.getLong("id"));
+                stmt.setString(3, coinId);
                 i++;
                 stmt.addBatch();
                 if (i % 2000 == 0) {

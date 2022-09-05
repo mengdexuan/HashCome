@@ -38,6 +38,11 @@ public class MemberContractWalletService extends BaseService {
         return memberContractWalletDao.findAll(predicate, pageable);
     }
     public MemberContractWallet save(MemberContractWallet memberContractWallet){
+        List<MemberContractWallet> wallets = memberContractWalletDao.findAllByMemberId(memberContractWallet.getMemberId());
+        if (wallets.size() > 0) {
+            memberContractWallet.setUsdtBalance(wallets.get(0).getUsdtBalance());
+            memberContractWallet.setUsdtFrozenBalance(wallets.get(0).getUsdtFrozenBalance());
+        }
         return memberContractWalletDao.saveAndFlush(memberContractWallet);
     }
 
