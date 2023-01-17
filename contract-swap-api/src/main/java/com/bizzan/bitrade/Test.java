@@ -9,8 +9,8 @@ import java.util.Map;
 public class Test {
 
     public static void main(String[] args) {
-//        String url = "http://10.8.28.39:8801/swap/order/open";
-//        String url = "http://10.8.28.39:8801/uc/login";
+//        String url = "http://10.8.35.139:8801/swap/order/open";
+//        String url = "http://10.8.35.139:8801/uc/login";
         String url = "http://103.218.242.25:8801/swap/order/position-detail";
 
         HttpRequest post = HttpUtil.createPost(url);
