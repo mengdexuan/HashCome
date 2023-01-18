@@ -12,7 +12,7 @@
 
 
     <!-- 日志保存路径可写统一日志归档路径 -->
-    <property name="LOG_DIR" value="/app/log"/>
+    <property name="LOG_DIR" value="log"/>
 
 
     <!-- 控制台输出 -->
