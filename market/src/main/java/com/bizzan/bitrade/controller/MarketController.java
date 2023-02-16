@@ -43,7 +43,7 @@ public class MarketController {
     private RestTemplate restTemplate;
     @Autowired
     private RedisTemplate redisTemplate;
-    
+
     @Autowired
     private CoinExchangeRate coinExchangeRate;
 
@@ -100,7 +100,7 @@ public class MarketController {
 
         return result;
     }
-    
+
     @RequestMapping("engines")
 	public Map<String, Integer> engines() {
 		Map<String, CoinProcessor> processorList = coinProcessorFactory.getProcessorMap();
@@ -126,7 +126,7 @@ public class MarketController {
         coin.setColdWalletAddress("");//隐藏冷钱包地址
         return coin;
     }
-    
+
     /**
      * 获取C2C中USDT兑换人民币价格
      * @param symbol
@@ -143,7 +143,7 @@ public class MarketController {
         mr.setData(obj);
         return mr;
     }
-    
+
     /**
      * 获取某交易对详情
      * @param symbol
@@ -241,6 +241,8 @@ public class MarketController {
 
         List<KLine> list = marketService.findAllKLine(symbol,from,to,period);
 
+        log.info("查询K线的集合数据：{}",list);
+
         JSONArray array = new JSONArray();
         boolean startFlag = false;
         KLine temKline = null;
@@ -266,7 +268,7 @@ public class MarketController {
             group.add(4,item.getClosePrice());
             group.add(5,item.getVolume());
             array.add(group);
-            
+
             temKline = item;
         }
 
