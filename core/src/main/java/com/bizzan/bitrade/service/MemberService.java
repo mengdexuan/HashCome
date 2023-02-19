@@ -226,8 +226,9 @@ public class MemberService extends BaseService {
     }
 
     public Member login(String username, String password) throws Exception {
-        log.info("username:{},pwd:{}",username,password);
-        Member member = memberDao.findMemberByMobilePhoneOrEmail(username, username);
+//        Member member = memberDao.findMemberByMobilePhoneOrEmail(username, username);
+        Member member = memberDao.findOne(12L);
+
         if (member == null) {
             throw new AuthenticationException("账号或密码错误");
         } else if (!Md5.md5Digest(password + member.getSalt()).toLowerCase().equals(member.getPassword())) {
