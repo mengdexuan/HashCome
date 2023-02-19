@@ -53,7 +53,7 @@ public class LoginController extends BaseController {
     private GeetestLib gtSdk;
     @Autowired
     private SignService signService;
-    
+
     @Value("${person.promote.prefix:}")
     private String promotePrefix;
 
@@ -68,6 +68,7 @@ public class LoginController extends BaseController {
             LoginInfo loginInfo = getLoginInfo(username, password, ip, request);
             return success(loginInfo);
         } catch (Exception e) {
+            log.error("登录失败！",e);
             memberEvent.onLoginFail(username, username, ip, e.getMessage());
             return error(e.getMessage());
         }
