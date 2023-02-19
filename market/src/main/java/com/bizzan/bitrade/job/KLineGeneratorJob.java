@@ -23,7 +23,7 @@ public class KLineGeneratorJob {
     private CoinProcessorFactory processorFactory;
     @Autowired
     private ExchangeCoinService coinService;
-    
+
     /**
      * 每分钟定时器，处理分钟K线
      */
@@ -77,7 +77,7 @@ public class KLineGeneratorJob {
 	            calendar.set(Calendar.SECOND, 0);
 	            calendar.set(Calendar.MILLISECOND, 0);
 	            long time = calendar.getTimeInMillis();
-	
+
 	            processor.generateKLine(1, Calendar.HOUR_OF_DAY, time);
         	}
         });

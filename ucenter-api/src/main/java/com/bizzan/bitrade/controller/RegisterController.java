@@ -185,7 +185,7 @@ public class RegisterController {
         if (result != null) {
             return result;
         }
-        String email = loginByEmail.getEmail();
+        /*String email = loginByEmail.getEmail();
         isTrue(!memberService.emailIsExist(email), localeMessageSourceService.getMessage("EMAIL_ALREADY_BOUND"));
         isTrue(!memberService.usernameIsExist(loginByEmail.getUsername()), localeMessageSourceService.getMessage("USERNAME_ALREADY_EXISTS"));
         // isTrue(memberService.userPromotionCodeIsExist(loginByEmail.getPromotion()),localeMessageSourceService.getMessage("USER_PROMOTION_CODE_EXISTS"));
@@ -197,7 +197,7 @@ public class RegisterController {
             return error(localeMessageSourceService.getMessage("VERIFICATION_CODE_INCORRECT"));
         } else {
             valueOperations.getOperations().delete(SysConstant.EMAIL_REG_CODE_PREFIX + email);
-        }
+        }*/
 
         //不可重复随机数
         String loginNo = String.valueOf(idWorkByTwitter.nextId());
