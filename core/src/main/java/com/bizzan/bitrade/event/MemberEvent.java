@@ -211,6 +211,6 @@ public class MemberEvent {
         mr.setLatitude("");
         mr.setLongitude("");
         mr.setRemark(remark);
-        memberRecordService.save(mr);
+//        memberRecordService.save(mr);
     }
 }
