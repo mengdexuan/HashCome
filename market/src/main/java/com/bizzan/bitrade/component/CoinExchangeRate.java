@@ -269,7 +269,7 @@ public class CoinExchangeRate {
 //        }
 
         // Huobi Otc接口（如抹茶接口无效则走此路径）
-        String url2 = "http://otc-api.hbg.com/v1/data/trade-market?coinId=2&currency=1&tradeType=sell&currPage=1&payMethod=0&country=&blockType=general&online=1&range=0&amount=";
+        String url2 = "http://otc-api.hbg.com/v1/data/trade-market?coinId=2&currency=2&tradeType=sell&currPage=1&payMethod=0&country=&blockType=general&online=1&range=0&amount=";
         HttpResponse<JsonNode> resp2 = Unirest.get(url2)
                 .asJson();
         if(resp2.getStatus() == 200) { //正确返回
@@ -285,7 +285,7 @@ public class CoinExchangeRate {
         }
 
         // Okex Otc接口
-        String url3 = "http://otc-api.hbg.com/v1/data/trade-market?coinId=2&currency=1&tradeType=sell&currPage=1&payMethod=0&country=37&blockType=general&online=1&range=0&amount=";
+        String url3 = "http://otc-api.hbg.com/v1/data/trade-market?coinId=2&currency=2&tradeType=sell&currPage=1&payMethod=0&country=37&blockType=general&online=1&range=0&amount=";
         HttpResponse<JsonNode> resp3 = Unirest.get(url2)
                 .asJson();
         if(resp3.getStatus() == 200) { //正确返回
